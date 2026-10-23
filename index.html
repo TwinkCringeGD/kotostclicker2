@@ -1,451 +1,492 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>KOTOST CLICKER II</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
-<style>
-:root{--sekai-bg:#000000;--sekai-bone-white:#E8E4D8;--sekai-bone-bright:#FFFFFF;--sekai-bone-dim:#8E8A7D;--sekai-blood-red:#E50914}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;user-select:none;-webkit-user-select:none}
-html,body{width:100%;height:100%;background:var(--sekai-bg);color:var(--sekai-bone-white);font-family:'VT323',monospace;overflow:hidden;touch-action:manipulation}
-#game *::-webkit-scrollbar{width:6px;height:6px}
-#game *::-webkit-scrollbar-track{background:#050505}
-#game *::-webkit-scrollbar-thumb{background:#2a2a2a;border:1px solid #111}
-#game *::-webkit-scrollbar-thumb:hover{background:#444}
-#game{width:100%;height:100%;position:relative;display:flex;flex-direction:column;overflow:hidden;background:#000}
-.screen{display:none !important;position:absolute;inset:0;width:100%;height:100%}
-body[data-phase="menu"] .screen[data-show-on="menu"],body[data-phase="game"] .screen[data-show-on="game"],body[data-phase="creator"] .screen[data-show-on="creator"],body[data-phase="newgame_confirm"] .screen[data-show-on="newgame_confirm"],body[data-phase="settings"] .screen[data-show-on="settings"],body[data-phase="red_flash"] .screen[data-show-on="red_flash"]{display:flex !important}
-.crt-vignette{position:absolute;inset:0;pointer-events:none;z-index:25;background:radial-gradient(circle at center,transparent 60%,rgba(0,0,0,.85) 100%),linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,.3) 50%);background-size:100% 100%,100% 4px;box-shadow:inset 0 0 60px rgba(0,0,0,.9)}
-.scanlines-overlay{position:absolute;inset:0;pointer-events:none;z-index:24;background:repeating-linear-gradient(to bottom,rgba(255,255,255,.03) 0px,rgba(255,255,255,.03) 1px,rgba(0,0,0,.4) 2px,rgba(0,0,0,.4) 4px)}
-#noise-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:22;opacity:.18;transition:opacity .1s linear}
-body.noise-intense #noise-canvas{opacity:.42}
-body.noise-extreme #noise-canvas{opacity:.88}
-.menu-inner{position:relative;z-index:10;width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;align-items:center;padding:32px 28px}
-.header-wrap{width:100%;text-align:center;margin-top:24px;flex-shrink:0}
-.main-title{font-size:64px;letter-spacing:8px;font-weight:700;color:var(--sekai-bone-white);text-transform:uppercase;line-height:1.1;text-shadow:2px 0 1px rgba(255,0,0,.7),-2px 0 1px rgba(0,255,255,.7),0 0 10px rgba(232,228,216,.35);animation:subtle-jitter 4s infinite alternate ease-in-out}
-.sub-title{margin-top:6px;font-size:24px;letter-spacing:2px;color:var(--sekai-bone-dim);text-transform:uppercase;opacity:.85;text-shadow:1px 0 1px rgba(255,0,0,.5),-1px 0 1px rgba(0,255,255,.5)}
-.nav-group{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;width:100%;max-width:380px;flex:1;min-height:0}
-.vhs-btn{background:transparent;border:2px solid transparent;outline:none;color:var(--sekai-bone-white);font-family:'VT323',monospace;font-size:38px;letter-spacing:4px;text-transform:uppercase;padding:8px 24px;display:flex;align-items:center;justify-content:center;min-height:48px;min-width:220px;text-align:center;cursor:pointer;position:relative;touch-action:manipulation;transition:all .05s ease;text-shadow:1px 0 0 rgba(255,0,0,.4),-1px 0 0 rgba(0,200,255,.4)}
-.vhs-btn:hover,.vhs-btn:focus-visible{color:var(--sekai-bone-bright);background-color:rgba(232,228,216,.12);border-color:rgba(232,228,216,.6);text-shadow:3px 0 0 rgba(255,0,0,.9),-3px 0 0 rgba(0,255,255,.9),0 0 12px rgba(255,255,255,.8);animation:glitch-jitter .14s infinite}
-.vhs-btn:active{transform:scale(.96);background-color:rgba(232,228,216,.28);color:#FFF}
-.btn-indicator{opacity:0;pointer-events:none;margin-right:10px;display:inline-block;width:1ch;text-align:center}
-.btn-text{display:inline-block}
-.btn-spacer{display:inline-block;width:1ch;margin-left:10px}
-.vhs-btn:hover .btn-indicator,.vhs-btn:focus-visible .btn-indicator{opacity:1}
-#save-corrupt-msg{font-size:22px;color:var(--sekai-blood-red);background:rgba(0,0,0,.85);border:1px dashed var(--sekai-blood-red);padding:6px 14px;text-align:center;margin-top:8px;min-height:34px;opacity:0;transition:opacity .2s ease;letter-spacing:2px;text-transform:uppercase}
-#save-corrupt-msg.visible{opacity:1;animation:glitch-flicker .2s infinite}
-.easter-egg-wrap{width:100%;display:flex;justify-content:center;align-items:center;padding-bottom:14px;flex-shrink:0}
-#easter-egg{background:transparent;border:none;outline:none;font-family:'VT323',monospace;font-size:19px;letter-spacing:3px;color:var(--sekai-bone-white);cursor:pointer;padding:12px 20px;min-height:44px;opacity:.22;animation:egg-flicker 6s infinite;touch-action:manipulation;text-transform:uppercase}
-#easter-egg:hover,#easter-egg:active{opacity:.75;color:#FFF;text-shadow:0 0 6px rgba(255,0,0,.8)}
-.creator-wrap{position:relative;z-index:40;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;text-align:center;background:rgba(5,5,5,.94)}
-.creator-box{max-width:480px;border:2px solid var(--sekai-bone-dim);padding:36px 28px;background:#000;box-shadow:0 0 40px rgba(255,255,255,.1),inset 0 0 20px rgba(0,0,0,.9)}
-.creator-prefix{font-size:22px;color:var(--sekai-blood-red);letter-spacing:4px;margin-bottom:12px;text-transform:uppercase}
-.creator-text{font-size:36px;line-height:1.3;color:var(--sekai-bone-bright);letter-spacing:3px;text-shadow:2px 0 1px rgba(255,0,0,.8),-2px 0 1px rgba(0,200,255,.8);margin-bottom:28px;animation:glitch-jitter .25s infinite}
-.confirm-wrap{position:relative;z-index:40;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;text-align:center;background:rgba(10,2,2,.92)}
-.confirm-box{max-width:460px;border:2px solid var(--sekai-blood-red);padding:32px 24px;background:#050000;box-shadow:0 0 30px rgba(229,9,20,.35)}
-.warning-badge{font-size:24px;color:var(--sekai-blood-red);letter-spacing:5px;margin-bottom:14px;text-transform:uppercase}
-.warning-text{font-size:32px;line-height:1.35;color:var(--sekai-bone-white);letter-spacing:2px;margin-bottom:30px;text-shadow:1px 0 1px rgba(255,0,0,.7)}
-.dialog-btn-row{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;width:100%}
-.dialog-btn{background:#000;border:2px solid var(--sekai-bone-dim);color:var(--sekai-bone-white);font-family:'VT323',monospace;font-size:28px;letter-spacing:3px;padding:10px 20px;cursor:pointer;min-height:48px;min-width:140px;text-transform:uppercase;touch-action:manipulation}
-.dialog-btn:hover,.dialog-btn:focus-visible{border-color:var(--sekai-bone-bright);color:#FFF;background:rgba(255,255,255,.15);box-shadow:0 0 12px rgba(255,255,255,.4)}
-.dialog-btn.danger-btn{border-color:var(--sekai-blood-red);color:#FFAAAA}
-.dialog-btn.danger-btn:hover{background:rgba(229,9,20,.3);color:#FFF;box-shadow:0 0 16px rgba(229,9,20,.7)}
-.settings-wrap{position:relative;z-index:40;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;text-align:center;background:rgba(0,0,0,.95)}
-.settings-box{max-width:520px;width:100%;max-height:90vh;overflow-y:auto;border:2px solid var(--sekai-bone-dim);padding:36px 28px;background:#060606}
-.settings-title{font-size:40px;letter-spacing:4px;color:var(--sekai-bone-white);margin-bottom:24px;text-transform:uppercase}
-.dev-panel{margin-top:16px;padding:12px;border:1px dashed var(--sekai-bone-dim);background:#040404;text-align:left}
-.dev-input{width:100%;min-height:40px;font-size:16px;font-family:monospace;background:#000;color:#fff;border:1px solid var(--sekai-bone-dim);padding:6px 10px;margin-bottom:8px}
-.dev-btn{width:100%;min-height:40px;font-family:inherit;font-size:16px;background:#111;color:#fff;border:1px solid var(--sekai-bone-white);cursor:pointer;margin-bottom:6px}
-.dev-btn:active{transform:scale(.96)}
-.dev-section-title{font-size:18px;color:var(--sekai-bone-bright);margin:10px 0 6px;border-bottom:1px solid #333;padding-bottom:4px}
-.creator-game-art{width:min(24vw,100px);height:min(15vh,100px);object-fit:contain;filter:contrast(1.2) drop-shadow(0 0 8px #aaa)}
-.creator-sprite-slot{width:min(28vw,128px);height:min(18vh,118px);object-fit:contain;align-self:center}
-.creator-subtitle{max-width:100%;min-height:2.5em;color:var(--sekai-bone-bright);font-size:clamp(16px,4vw,21px);line-height:1.2;text-shadow:2px 0 #d11,-2px 0 #159;overflow-wrap:anywhere}
-.transition-noise{position:absolute;inset:0;z-index:30;pointer-events:none;opacity:0;background:repeating-radial-gradient(#fff 0 1px,#000 1px 3px);transition:opacity .35s ease}
-.transition-noise.active{opacity:.88}
-.creator-sprite-slot.hidden-creator{display:none !important}
-.game-tab-pane{display:none;width:100%;height:100%;flex-direction:column;align-items:center;padding-top:0 !important;padding-bottom:24px;box-sizing:border-box}
-.game-tab-pane::after{content:"";display:block;width:100%;height:16px;flex-shrink:0;pointer-events:none}
-.cat-click-anim{animation:cat-pulse .28s cubic-bezier(.175,.885,.32,1.275)}
-@keyframes cat-pulse{0%{transform:scale(1);filter:drop-shadow(0 0 14px rgba(232,228,216,.28))}35%{transform:scale(.88) rotate(-2deg);filter:drop-shadow(0 0 24px rgba(255,255,255,.7)) brightness(1.25)}70%{transform:scale(1.06) rotate(1deg);filter:drop-shadow(0 0 18px rgba(232,228,216,.45))}100%{transform:scale(1) rotate(0deg);filter:drop-shadow(0 0 14px rgba(232,228,216,.28))}}
-.game-tab-pane.active{display:flex;animation:pane-reveal .2s ease both}
-@keyframes pane-reveal{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-.store-subtabs{display:flex;gap:10px;justify-content:center;width:100%;flex-shrink:0;margin-bottom:12px}
-.store-subtabs button{flex:1;min-width:0;min-height:44px;padding:10px;border:1px solid var(--sekai-bone-white);background:#080808;color:var(--sekai-bone-white);font:inherit;font-size:clamp(14px,3.6vw,19px);touch-action:manipulation;cursor:pointer}
-.store-subtabs button.active{color:#fff;border-color:#fff;background:#242424}
-.variant-list{width:100%;overflow-y:auto;min-height:0;display:none;flex-direction:column;gap:15px;padding:0 10px;box-sizing:border-box}
-.variant-list.active{display:flex}
-.store-subtabs button:active,.upgrade-btn:active,.bonus-btn:active,.game-hud-back:active{transform:scale(.95);opacity:.85}
-.game-screen-wrap{transition:opacity .2s ease,filter .2s ease}
-.creator-subtitle{overflow-wrap:anywhere}
-.game-screen-wrap{position:relative;z-index:10;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;padding:0;text-align:center;overflow:hidden}
-.game-hud{width:100%;padding:10px 16px 4px;font-size:clamp(24px,6vw,40px);letter-spacing:3px;color:var(--sekai-bone-white);text-shadow:2px 0 1px rgba(255,0,0,.7),-2px 0 1px rgba(0,255,255,.7);flex-shrink:0;border-bottom:1px dashed rgba(232,228,216,.2);background:rgba(0,0,0,.6);display:flex;justify-content:space-between;align-items:center}
-.game-hud-score{font-size:inherit}
-.creator-top-caption{width:100%;min-height:2.5em;padding:2px 10px;color:var(--sekai-bone-bright);font-size:clamp(16px,4vw,21px);line-height:1.2;text-shadow:2px 0 #d11,-2px 0 #159;overflow-wrap:anywhere}
-.game-hud-back{background:#000;border:1px solid var(--sekai-bone-dim);color:var(--sekai-bone-white);font-family:inherit;font-size:clamp(14px,3.5vw,18px);padding:4px 10px;cursor:pointer}
-.game-tab-content-area{flex:1;width:100%;min-height:0;overflow-y:auto;overflow-x:hidden;position:relative;padding:0 16px 20px;display:flex;flex-direction:column}
-.game-tab-pane{display:none;width:100%;height:100%;flex-direction:column;align-items:center}
-.game-tab-pane.active{display:flex}
-.hotbar-container{width:100%;flex-shrink:0;background:#050505;border-top:2px solid var(--sekai-bone-dim);overflow-x:auto;overflow-y:hidden;white-space:nowrap;display:flex;gap:6px;padding:8px 10px;-webkit-overflow-scrolling:touch;touch-action:pan-x;scrollbar-width:thin}
-.hotbar-tab{background:#000;border:1px solid var(--sekai-bone-dim);color:var(--sekai-bone-dim);font-family:'VT323',monospace;font-size:clamp(18px,4.2vw,24px);letter-spacing:2px;padding:8px 16px;min-height:44px;flex-shrink:0;cursor:pointer;text-transform:uppercase;transition:all .1s ease}
-.hotbar-tab:active{transform:scale(.95)}
-.hotbar-tab.active{color:var(--sekai-bone-bright);border-color:var(--sekai-bone-bright);background:rgba(232,228,216,.15);box-shadow:0 0 10px rgba(232,228,216,.3);text-shadow:1px 0 1px rgba(255,0,0,.7)}
-.tab-title{font-size:clamp(24px,5.5vw,36px);letter-spacing:3px;margin-bottom:12px;text-transform:uppercase;color:var(--sekai-bone-white)}
-.upgrades-list,.logs-list{width:100%;max-width:500px;display:flex;flex-direction:column;gap:15px;padding:0 10px;box-sizing:border-box;margin:0 auto}
-.clicker-center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;flex:1}
-.game-subtext{font-size:clamp(16px,4vw,22px);color:var(--sekai-bone-dim);letter-spacing:2px;text-transform:uppercase}
-#cat-display{width:min(58vw,260px);height:min(32vh,230px);object-fit:contain;cursor:pointer;filter:drop-shadow(0 0 14px rgba(232,228,216,.28));transition:transform .1s ease}
-.custom-dialog{position:absolute;inset:0;z-index:45;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.94)}
-.custom-dialog.open{display:flex}
-.custom-dialog.update-dialog{z-index:9999}
-.custom-dialog-box{width:min(100%,480px);max-height:88%;overflow-y:auto;border:2px solid var(--sekai-bone-white);background:#000;color:var(--sekai-bone-white);padding:16px;box-shadow:0 0 28px rgba(232,228,216,.16)}
-.skin-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%;max-width:540px;margin:0 auto}
-.skin-card{min-width:0;border:1px solid var(--sekai-bone-dim);padding:8px;text-align:center;background:#080808}
-.skin-card img{width:100%;height:90px;object-fit:contain}
-.skin-card strong,.skin-card span{display:block;color:var(--sekai-bone-white);font-size:clamp(15px,3.5vw,20px)}
-.skin-card button{margin-top:6px;max-width:100%;min-height:44px;padding:6px 8px;border:1px solid var(--sekai-bone-white);background:#000;color:var(--sekai-bone-white);font:inherit;font-size:clamp(14px,3.5vw,19px);touch-action:manipulation}
-.skin-card button:active,.custom-dialog button:active{transform:scale(.95);opacity:.85}
-.custom-dialog-box{max-width:420px;text-align:center}
-.custom-dialog-message{font-size:clamp(22px,5vw,30px);line-height:1.35;margin-bottom:18px}
-.upgrade-card{border:1px solid #fff;background:#080808;padding:15px;width:100%;box-sizing:border-box;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left}
-.upgrade-info{flex:1}
-.upgrade-name{font-size:clamp(18px,4.2vw,24px);color:var(--sekai-bone-bright)}
-.upgrade-desc{font-size:clamp(14px,3.2vw,17px);color:var(--sekai-bone-dim)}
-.upgrade-btn{background:#000;border:1px solid var(--sekai-bone-white);color:var(--sekai-bone-white);font-family:inherit;font-size:clamp(16px,3.8vw,22px);padding:10px 16px;min-width:105px;min-height:46px;cursor:pointer;touch-action:manipulation}
-.upgrade-btn:disabled,.upgrade-btn.maxed{border-color:#555;color:#777;background:#111;cursor:not-allowed}
-.mail-box{width:100%;max-width:500px;border:1px dashed var(--sekai-bone-dim);background:#050505;padding:16px;margin:0 auto;text-align:left}
-.mail-sender{color:var(--sekai-blood-red);font-size:clamp(16px,3.8vw,22px);margin-bottom:8px;letter-spacing:2px}
-.mail-body{font-size:clamp(16px,3.6vw,20px);line-height:1.4;color:var(--sekai-bone-white);margin-bottom:16px}
-.bonus-btn{background:#000;border:2px solid var(--sekai-bone-bright);color:var(--sekai-bone-bright);font-family:inherit;font-size:clamp(18px,4.2vw,24px);padding:10px 18px;min-height:44px;width:100%;cursor:pointer}
-.bonus-btn:disabled{border-color:#444;color:#666;cursor:not-allowed}
-.log-item{font-size:clamp(14px,3.4vw,18px);padding:8px 12px;border-left:3px solid var(--sekai-bone-dim);background:#070707;text-align:left;letter-spacing:1px}
-.log-item.unlocked{border-left-color:var(--sekai-bone-bright);color:var(--sekai-bone-white);text-shadow:1px 0 1px rgba(0,255,255,.4)}
-.log-item.locked{color:#555}
-.red-flash-wrap{position:relative;z-index:50;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;background:#E50914;animation:intense-flash .08s infinite alternate;padding:20px;text-align:center}
-.red-flash-text{font-size:clamp(34px,9vw,68px);color:#FFFFFF;letter-spacing:6px;font-weight:700;text-transform:uppercase;text-shadow:0 0 20px #000,4px 4px 0 #000;animation:glitch-jitter .09s infinite}
-@keyframes glitch-jitter{0%{transform:translate(0,0)}20%{transform:translate(-3px,1px)}40%{transform:translate(3px,-2px)}60%{transform:translate(-2px,-1px)}80%{transform:translate(2px,2px)}100%{transform:translate(0,0)}}
-@keyframes subtle-jitter{0%,92%,100%{transform:translate(0,0)}93%{transform:translate(-2px,1px)}95%{transform:translate(2px,-1px)}97%{transform:translate(-1px,2px)}}
-@keyframes glitch-flicker{0%,100%{opacity:1}50%{opacity:.35}}
-@keyframes egg-flicker{0%,100%{opacity:.18}15%{opacity:.35}18%{opacity:.1}35%{opacity:.28}50%{opacity:.08}52%{opacity:.45}54%{opacity:.12}80%{opacity:.3}83%{opacity:.05}}
-@keyframes intense-flash{0%{background-color:#E50914}50%{background-color:#990008}100%{background-color:#FF1A26}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <title>KOTOST CLICKER II</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323&display=swap">
+    <style>
+        :root {
+            --sekai-bg: #000000;
+            --sekai-bone-white: #E8E4D8;
+            --sekai-bone-bright: #FFFFFF;
+            --sekai-bone-dim: #8E8A7D;
+            --sekai-blood-red: #E50914;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+        html, body { width: 100%; height: 100%; background: var(--sekai-bg); color: var(--sekai-bone-white); font-family: 'VT323', monospace; overflow: hidden; touch-action: manipulation; }
+        #game *::-webkit-scrollbar { width: 6px; height: 6px; }
+        #game *::-webkit-scrollbar-track { background: #050505; }
+        #game *::-webkit-scrollbar-thumb { background: #2a2a2a; border: 1px solid #111; }
+        #game *::-webkit-scrollbar-thumb:hover { background: #444; }
+        #game { width: 100%; height: 100%; position: relative; display: flex; flex-direction: column; overflow: hidden; background: #000; }
+        .screen { display: none !important; position: absolute; inset: 0; width: 100%; height: 100%; }
+        body[data-phase="menu"] .screen[data-show-on="menu"],
+        body[data-phase="game"] .screen[data-show-on="game"],
+        body[data-phase="creator"] .screen[data-show-on="creator"],
+        body[data-phase="newgame_confirm"] .screen[data-show-on="newgame_confirm"],
+        body[data-phase="settings"] .screen[data-show-on="settings"],
+        body[data-phase="red_flash"] .screen[data-show-on="red_flash"] { display: flex !important; }
+        .crt-vignette { position: absolute; inset: 0; pointer-events: none; z-index: 25; background: radial-gradient(circle at center, transparent 60%, rgba(0,0,0,.85) 100%), linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,.3) 50%); background-size: 100% 100%, 100% 4px; box-shadow: inset 0 0 60px rgba(0,0,0,.9); }
+        .scanlines-overlay { position: absolute; inset: 0; pointer-events: none; z-index: 24; background: repeating-linear-gradient(to bottom, rgba(255,255,255,.03) 0px, rgba(255,255,255,.03) 1px, rgba(0,0,0,.4) 2px, rgba(0,0,0,.4) 4px); }
+        #noise-canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 22; opacity: .18; transition: opacity .1s linear; }
+        body.noise-intense #noise-canvas { opacity: .42; }
+        body.noise-extreme #noise-canvas { opacity: .88; }
+        .menu-inner { position: relative; z-index: 10; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 32px 28px; }
+        .header-wrap { width: 100%; text-align: center; margin-top: 24px; flex-shrink: 0; }
+        .main-title { font-size: 64px; letter-spacing: 8px; font-weight: 700; color: var(--sekai-bone-white); text-transform: uppercase; line-height: 1.1; text-shadow: 2px 0 1px rgba(255,0,0,.7), -2px 0 1px rgba(0,255,255,.7), 0 0 10px rgba(232,228,216,.35); animation: subtle-jitter 4s infinite alternate ease-in-out; }
+        .sub-title { margin-top: 6px; font-size: 24px; letter-spacing: 2px; color: var(--sekai-bone-dim); text-transform: uppercase; opacity: .85; text-shadow: 1px 0 1px rgba(255,0,0,.5), -1px 0 1px rgba(0,255,255,.5); }
+        .nav-group { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; width: 100%; max-width: 380px; flex: 1; min-height: 0; }
+        .vhs-btn { background: transparent; border: 2px solid transparent; outline: none; color: var(--sekai-bone-white); font-family: 'VT323', monospace; font-size: 38px; letter-spacing: 4px; text-transform: uppercase; padding: 8px 24px; display: flex; align-items: center; justify-content: center; min-height: 48px; min-width: 220px; text-align: center; cursor: pointer; position: relative; touch-action: manipulation; transition: all .05s ease; text-shadow: 1px 0 0 rgba(255,0,0,.4), -1px 0 0 rgba(0,200,255,.4); }
+        .vhs-btn:hover, .vhs-btn:focus-visible { color: var(--sekai-bone-bright); background-color: rgba(232,228,216,.12); border-color: rgba(232,228,216,.6); text-shadow: 3px 0 0 rgba(255,0,0,.9), -3px 0 0 rgba(0,255,255,.9), 0 0 12px rgba(255,255,255,.8); animation: glitch-jitter .14s infinite; }
+        .vhs-btn:active { transform: scale(.96); background-color: rgba(232,228,216,.28); color: #FFF; }
+        .btn-indicator { opacity: 0; pointer-events: none; margin-right: 10px; display: inline-block; width: 1ch; text-align: center; }
+        .btn-text { display: inline-block; }
+        .btn-spacer { display: inline-block; width: 1ch; margin-left: 10px; }
+        .vhs-btn:hover .btn-indicator, .vhs-btn:focus-visible .btn-indicator { opacity: 1; }
+        #save-corrupt-msg { font-size: 22px; color: var(--sekai-blood-red); background: rgba(0,0,0,.85); border: 1px dashed var(--sekai-blood-red); padding: 6px 14px; text-align: center; margin-top: 8px; min-height: 34px; opacity: 0; transition: opacity .2s ease; letter-spacing: 2px; text-transform: uppercase; }
+        #save-corrupt-msg.visible { opacity: 1; animation: glitch-flicker .2s infinite; }
+        .easter-egg-wrap { width: 100%; display: flex; justify-content: center; align-items: center; padding-bottom: 14px; flex-shrink: 0; }
+        #easter-egg { background: transparent; border: none; outline: none; font-family: 'VT323', monospace; font-size: 19px; letter-spacing: 3px; color: var(--sekai-bone-white); cursor: pointer; padding: 12px 20px; min-height: 44px; opacity: .22; animation: egg-flicker 6s infinite; touch-action: manipulation; text-transform: uppercase; }
+        #easter-egg:hover, #easter-egg:active { opacity: .75; color: #FFF; text-shadow: 0 0 6px rgba(255,0,0,.8); }
+        .creator-wrap { position: relative; z-index: 40; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; text-align: center; background: rgba(5,5,5,.94); }
+        .creator-box { max-width: 480px; border: 2px solid var(--sekai-bone-dim); padding: 36px 28px; background: #000; box-shadow: 0 0 40px rgba(255,255,255,.1), inset 0 0 20px rgba(0,0,0,.9); }
+        .creator-prefix { font-size: 22px; color: var(--sekai-blood-red); letter-spacing: 4px; margin-bottom: 12px; text-transform: uppercase; }
+        .creator-text { font-size: 36px; line-height: 1.3; color: var(--sekai-bone-bright); letter-spacing: 3px; text-shadow: 2px 0 1px rgba(255,0,0,.8), -2px 0 1px rgba(0,200,255,.8); margin-bottom: 28px; animation: glitch-jitter .25s infinite; }
+        .confirm-wrap { position: relative; z-index: 40; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; text-align: center; background: rgba(10,2,2,.92); }
+        .confirm-box { max-width: 460px; border: 2px solid var(--sekai-blood-red); padding: 32px 24px; background: #050000; box-shadow: 0 0 30px rgba(229,9,20,.35); }
+        .warning-badge { font-size: 24px; color: var(--sekai-blood-red); letter-spacing: 5px; margin-bottom: 14px; text-transform: uppercase; }
+        .warning-text { font-size: 32px; line-height: 1.35; color: var(--sekai-bone-white); letter-spacing: 2px; margin-bottom: 30px; text-shadow: 1px 0 1px rgba(255,0,0,.7); }
+        .dialog-btn-row { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; width: 100%; }
+        .dialog-btn { background: #000; border: 2px solid var(--sekai-bone-dim); color: var(--sekai-bone-white); font-family: 'VT323', monospace; font-size: 28px; letter-spacing: 3px; padding: 10px 20px; cursor: pointer; min-height: 48px; min-width: 140px; text-transform: uppercase; touch-action: manipulation; }
+        .dialog-btn:hover, .dialog-btn:focus-visible { border-color: var(--sekai-bone-bright); color: #FFF; background: rgba(255,255,255,.15); box-shadow: 0 0 12px rgba(255,255,255,.4); }
+        .dialog-btn.danger-btn { border-color: var(--sekai-blood-red); color: #FFAAAA; }
+        .dialog-btn.danger-btn:hover { background: rgba(229,9,20,.3); color: #FFF; box-shadow: 0 0 16px rgba(229,9,20,.7); }
+        .settings-wrap { position: relative; z-index: 40; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 24px; text-align: center; background: rgba(0,0,0,.95); }
+        .settings-box { max-width: 520px; width: 100%; max-height: 90vh; overflow-y: auto; border: 2px solid var(--sekai-bone-dim); padding: 36px 28px; background: #060606; }
+        .settings-title { font-size: 40px; letter-spacing: 4px; color: var(--sekai-bone-white); margin-bottom: 24px; text-transform: uppercase; }
+        .dev-panel { margin-top: 16px; padding: 12px; border: 1px dashed var(--sekai-bone-dim); background: #040404; text-align: left; }
+        .dev-input { width: 100%; min-height: 40px; font-size: 16px; font-family: monospace; background: #000; color: #fff; border: 1px solid var(--sekai-bone-dim); padding: 6px 10px; margin-bottom: 8px; }
+        .dev-btn { width: 100%; min-height: 40px; font-family: inherit; font-size: 16px; background: #111; color: #fff; border: 1px solid var(--sekai-bone-white); cursor: pointer; margin-bottom: 6px; }
+        .dev-btn:active { transform: scale(.96); }
+        .dev-section-title { font-size: 18px; color: var(--sekai-bone-bright); margin: 10px 0 6px; border-bottom: 1px solid #333; padding-bottom: 4px; }
+        .creator-game-art { width: min(24vw, 100px); height: min(15vh, 100px); object-fit: contain; filter: contrast(1.2) drop-shadow(0 0 8px #aaa); }
+        .creator-sprite-slot { width: min(28vw, 128px); height: min(18vh, 118px); object-fit: contain; align-self: center; }
+        .creator-subtitle { max-width: 100%; min-height: 2.5em; color: var(--sekai-bone-bright); font-size: clamp(16px, 4vw, 21px); line-height: 1.2; text-shadow: 2px 0 #d11, -2px 0 #159; overflow-wrap: anywhere; }
+        .transition-noise { position: absolute; inset: 0; z-index: 30; pointer-events: none; opacity: 0; background: repeating-radial-gradient(#fff 0 1px, #000 1px 3px); transition: opacity .35s ease; }
+        .transition-noise.active { opacity: .88; }
+        .creator-sprite-slot.hidden-creator { display: none !important; }
+        .game-tab-pane { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; padding-top: 0 !important; padding-bottom: 24px; box-sizing: border-box; }
+        .game-tab-pane::after { content: ""; display: block; width: 100%; height: 16px; flex-shrink: 0; pointer-events: none; }
+        .cat-click-anim { animation: cat-pulse 0.28s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes cat-pulse { 0% { transform: scale(1); filter: drop-shadow(0 0 14px rgba(232,228,216,.28)); } 35% { transform: scale(0.88) rotate(-2deg); filter: drop-shadow(0 0 24px rgba(255,255,255,.7)) brightness(1.25); } 70% { transform: scale(1.06) rotate(1deg); filter: drop-shadow(0 0 18px rgba(232,228,216,.45)); } 100% { transform: scale(1) rotate(0deg); filter: drop-shadow(0 0 14px rgba(232,228,216,.28)); } }
+        .game-tab-pane.active { display: flex; animation: pane-reveal .2s ease both; }
+        @keyframes pane-reveal { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .store-subtabs { display: flex; gap: 10px; justify-content: center; width: 100%; flex-shrink: 0; margin-bottom: 12px; }
+        .store-subtabs button { flex: 1; min-width: 0; min-height: 44px; padding: 10px; border: 1px solid var(--sekai-bone-white); background: #080808; color: var(--sekai-bone-white); font: inherit; font-size: clamp(14px, 3.6vw, 19px); touch-action: manipulation; cursor: pointer; }
+        .store-subtabs button.active { color: #fff; border-color: #fff; background: #242424; }
+        .variant-list { width: 100%; overflow-y: auto; min-height: 0; display: none; flex-direction: column; gap: 15px; padding: 0 10px; box-sizing: border-box; }
+        .variant-list.active { display: flex; }
+        .store-subtabs button:active, .upgrade-btn:active, .bonus-btn:active, .game-hud-back:active { transform: scale(.95); opacity: .85; }
+        .game-screen-wrap { transition: opacity .2s ease, filter .2s ease; }
+        .creator-subtitle { overflow-wrap: anywhere; }
+        .game-screen-wrap { position: relative; z-index: 10; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; padding: 0; text-align: center; overflow: hidden; }
+        .game-hud { width: 100%; padding: 10px 16px 4px; font-size: clamp(24px, 6vw, 40px); letter-spacing: 3px; color: var(--sekai-bone-white); text-shadow: 2px 0 1px rgba(255,0,0,.7), -2px 0 1px rgba(0,255,255,.7); flex-shrink: 0; border-bottom: 1px dashed rgba(232,228,216,.2); background: rgba(0,0,0,.6); display: flex; justify-content: space-between; align-items: center; }
+        .game-hud-score { font-size: inherit; }
+        .creator-top-caption { width: 100%; min-height: 2.5em; padding: 2px 10px; color: var(--sekai-bone-bright); font-size: clamp(16px, 4vw, 21px); line-height: 1.2; text-shadow: 2px 0 #d11, -2px 0 #159; overflow-wrap: anywhere; }
+        .game-hud-back { background: #000; border: 1px solid var(--sekai-bone-dim); color: var(--sekai-bone-white); font-family: inherit; font-size: clamp(14px, 3.5vw, 18px); padding: 4px 10px; cursor: pointer; }
+        .game-tab-content-area { flex: 1; width: 100%; min-height: 0; overflow-y: auto; overflow-x: hidden; position: relative; padding: 0 16px 20px; display: flex; flex-direction: column; }
+        .game-tab-pane { display: none; width: 100%; height: 100%; flex-direction: column; align-items: center; }
+        .game-tab-pane.active { display: flex; }
+        .hotbar-container { width: 100%; flex-shrink: 0; background: #050505; border-top: 2px solid var(--sekai-bone-dim); overflow-x: auto; overflow-y: hidden; white-space: nowrap; display: flex; gap: 6px; padding: 8px 10px; -webkit-overflow-scrolling: touch; touch-action: pan-x; scrollbar-width: thin; }
+        .hotbar-tab { background: #000; border: 1px solid var(--sekai-bone-dim); color: var(--sekai-bone-dim); font-family: 'VT323', monospace; font-size: clamp(18px, 4.2vw, 24px); letter-spacing: 2px; padding: 8px 16px; min-height: 44px; flex-shrink: 0; cursor: pointer; text-transform: uppercase; transition: all 0.1s ease; }
+        .hotbar-tab:active { transform: scale(0.95); }
+        .hotbar-tab.active { color: var(--sekai-bone-bright); border-color: var(--sekai-bone-bright); background: rgba(232,228,216,.15); box-shadow: 0 0 10px rgba(232,228,216,.3); text-shadow: 1px 0 1px rgba(255,0,0,.7); }
+        .tab-title { font-size: clamp(24px, 5.5vw, 36px); letter-spacing: 3px; margin-bottom: 12px; text-transform: uppercase; color: var(--sekai-bone-white); }
+        .upgrades-list, .logs-list { width: 100%; max-width: 500px; display: flex; flex-direction: column; gap: 15px; padding: 0 10px; box-sizing: border-box; margin: 0 auto; }
+        .clicker-center { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; flex: 1; }
+        .game-subtext { font-size: clamp(16px, 4vw, 22px); color: var(--sekai-bone-dim); letter-spacing: 2px; text-transform: uppercase; }
+        #cat-display { width: min(58vw, 260px); height: min(32vh, 230px); object-fit: contain; cursor: pointer; filter: drop-shadow(0 0 14px rgba(232,228,216,.28)); transition: transform 0.1s ease; }
+        .custom-dialog { position: absolute; inset: 0; z-index: 45; display: none; align-items: center; justify-content: center; padding: 18px; background: rgba(0,0,0,.94); }
+        .custom-dialog.open { display: flex; }
+        .custom-dialog.update-dialog { z-index: 9999; }
+        .custom-dialog-box { width: min(100%, 480px); max-height: 88%; overflow-y: auto; border: 2px solid var(--sekai-bone-white); background: #000; color: var(--sekai-bone-white); padding: 16px; box-shadow: 0 0 28px rgba(232,228,216,.16); }
+        .skin-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; max-width: 540px; margin: 0 auto; }
+        .skin-card { min-width: 0; border: 1px solid var(--sekai-bone-dim); padding: 8px; text-align: center; background: #080808; }
+        .skin-card img { width: 100%; height: 90px; object-fit: contain; }
+        .skin-card strong, .skin-card span { display: block; color: var(--sekai-bone-white); font-size: clamp(15px, 3.5vw, 20px); }
+        .skin-card button { margin-top: 6px; max-width: 100%; min-height: 44px; padding: 6px 8px; border: 1px solid var(--sekai-bone-white); background: #000; color: var(--sekai-bone-white); font: inherit; font-size: clamp(14px, 3.5vw, 19px); touch-action: manipulation; }
+        .skin-card button:active, .custom-dialog button:active { transform: scale(.95); opacity: .85; }
+        .custom-dialog-box { max-width: 420px; text-align: center; }
+        .custom-dialog-message { font-size: clamp(22px, 5vw, 30px); line-height: 1.35; margin-bottom: 18px; }
+        .upgrade-card { border: 1px solid #fff; background: #080808; padding: 15px; width: 100%; box-sizing: border-box; display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; }
+        .upgrade-info { flex: 1; }
+        .upgrade-name { font-size: clamp(18px, 4.2vw, 24px); color: var(--sekai-bone-bright); }
+        .upgrade-desc { font-size: clamp(14px, 3.2vw, 17px); color: var(--sekai-bone-dim); }
+        .upgrade-btn { background: #000; border: 1px solid var(--sekai-bone-white); color: var(--sekai-bone-white); font-family: inherit; font-size: clamp(16px, 3.8vw, 22px); padding: 10px 16px; min-width: 105px; min-height: 46px; cursor: pointer; touch-action: manipulation; }
+        .upgrade-btn:disabled, .upgrade-btn.maxed { border-color: #555; color: #777; background: #111; cursor: not-allowed; }
+        .mail-box { width: 100%; max-width: 500px; border: 1px dashed var(--sekai-bone-dim); background: #050505; padding: 16px; margin: 0 auto; text-align: left; }
+        .mail-sender { color: var(--sekai-blood-red); font-size: clamp(16px, 3.8vw, 22px); margin-bottom: 8px; letter-spacing: 2px; }
+        .mail-body { font-size: clamp(16px, 3.6vw, 20px); line-height: 1.4; color: var(--sekai-bone-white); margin-bottom: 16px; }
+        .bonus-btn { background: #000; border: 2px solid var(--sekai-bone-bright); color: var(--sekai-bone-bright); font-family: inherit; font-size: clamp(18px, 4.2vw, 24px); padding: 10px 18px; min-height: 44px; width: 100%; cursor: pointer; }
+        .bonus-btn:disabled { border-color: #444; color: #666; cursor: not-allowed; }
+        .log-item { font-size: clamp(14px, 3.4vw, 18px); padding: 8px 12px; border-left: 3px solid var(--sekai-bone-dim); background: #070707; text-align: left; letter-spacing: 1px; }
+        .log-item.unlocked { border-left-color: var(--sekai-bone-bright); color: var(--sekai-bone-white); text-shadow: 1px 0 1px rgba(0,255,255,0.4); }
+        .log-item.locked { color: #555; }
+        .red-flash-wrap { position: relative; z-index: 50; width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #E50914; animation: intense-flash 0.08s infinite alternate; padding: 20px; text-align: center; }
+        .red-flash-text { font-size: clamp(34px, 9vw, 68px); color: #FFFFFF; letter-spacing: 6px; font-weight: 700; text-transform: uppercase; text-shadow: 0 0 20px #000, 4px 4px 0 #000; animation: glitch-jitter 0.09s infinite; }
+        @keyframes glitch-jitter { 0% { transform: translate(0, 0); } 20% { transform: translate(-3px, 1px); } 40% { transform: translate(3px, -2px); } 60% { transform: translate(-2px, -1px); } 80% { transform: translate(2px, 2px); } 100% { transform: translate(0, 0); } }
+        @keyframes subtle-jitter { 0%, 92%, 100% { transform: translate(0, 0); } 93% { transform: translate(-2px, 1px); } 95% { transform: translate(2px, -1px); } 97% { transform: translate(-1px, 2px); } }
+        @keyframes glitch-flicker { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+        @keyframes egg-flicker { 0%, 100% { opacity: 0.18; } 15% { opacity: 0.35; } 18% { opacity: 0.1; } 35% { opacity: 0.28; } 50% { opacity: 0.08; } 52% { opacity: 0.45; } 54% { opacity: 0.12; } 80% { opacity: 0.3; } 83% { opacity: 0.05; } }
+        @keyframes intense-flash { 0% { background-color: #E50914; } 50% { background-color: #990008; } 100% { background-color: #FF1A26; } }
+    </style>
 </head>
 <body data-phase="game">
-<div id="game">
-<canvas id="noise-canvas" width="113" height="209"></canvas>
-<div class="scanlines-overlay"></div>
-<div class="crt-vignette"></div>
-<section class="screen" data-show-on="menu">
-<div class="menu-inner">
-<header class="header-wrap">
-<h1 id="title-main" class="main-title">KOTOST CLICKER II</h1>
-<div id="title-sub" class="sub-title">By TwinkCringeGD</div>
-<div id="audio-status-hint" class="audio-hint" style="display:none">[ ЗВУК: АКТИВЕН ]</div>
-<div id="save-corrupt-msg">ОШИБКА: СОХРАНЕНИЕ ПОВРЕЖДЕНО</div>
-</header>
-<nav class="nav-group">
-<button id="btn-continue" class="vhs-btn"><span class="btn-indicator">&gt;</span><span class="btn-text">ПРОДОЛЖИТЬ</span><span class="btn-spacer"></span></button>
-<button id="btn-newgame" class="vhs-btn"><span class="btn-indicator">&gt;</span><span class="btn-text">НОВАЯ ИГРА</span><span class="btn-spacer"></span></button>
-<button id="btn-settings" class="vhs-btn"><span class="btn-indicator">&gt;</span><span class="btn-text">НАСТРОЙКИ</span><span class="btn-spacer"></span></button>
-<button id="btn-exit" class="vhs-btn"><span class="btn-indicator">&gt;</span><span class="btn-text">ВЫЙТИ</span><span class="btn-spacer"></span></button>
-</nav>
-<footer class="easter-egg-wrap">
-<button id="easter-egg">You are not alone</button>
-</footer>
-</div>
-</section>
-<section class="screen" data-show-on="game" id="game-screen" style="display:flex">
-<div class="game-screen-wrap">
-<div class="game-hud">
-<div class="game-hud-score">СЧЁТ: <span id="click-counter">1</span></div>
-<button id="btn-back-to-menu" class="game-hud-back">[ В МЕНЮ ]</button>
-</div>
-<div id="creator-top-caption" class="creator-top-caption"></div>
-<div class="game-tab-content-area">
-<div class="game-tab-pane" id="pane-play">
-<div id="creator-line" class="creator-subtitle"></div>
-<div class="clicker-center">
-<img id="creator-sprite" class="creator-sprite-slot hidden-creator" src="https://raw.githubusercontent.com/TwinkCringeGD/kotostclicker2/main/sprite1.png">
-<div class="transition-noise" id="transition-noise"></div>
-<img id="cat-display" src="https://github.com/TwinkCringeGD/kotostclicker2/raw/main/cat.png" class="cat-click-anim">
-<div class="game-subtext">«КЛИКАЙ ПОКА МОЖЕШЬ...»</div>
-<div id="click-multiplier" class="game-subtext">МНОЖИТЕЛЬ: x1</div>
-<div id="cps-display" class="game-subtext">АВТОКЛИК: 0/сек</div>
-</div>
-</div>
-<div class="game-tab-pane" id="pane-upgrades">
-<div class="store-subtabs" style="display:none"><button id="upgrade-subtab" class="active">УЛУЧШЕНИЯ</button><button id="variant-subtab">ВАРИАНТЫ</button></div>
-<div id="upgrades-list" class="upgrades-list" style="display:flex"></div>
-<div id="variant-list" class="variant-list"></div>
-</div>
-<div class="game-tab-pane" id="pane-skins">
-<h2 class="tab-title">СКИНЫ</h2>
-<div id="skin-list" class="skin-list"></div>
-</div>
-<div class="game-tab-pane" id="pane-achievements">
-<h2 class="tab-title">СИСТЕМНЫЕ ЛОГИ</h2>
-<div id="achievements-list" class="logs-list"></div>
-</div>
-<div class="game-tab-pane" id="pane-mail">
-<h2 class="tab-title">ПОЧТА</h2>
-<div class="mail-box">
-<div class="mail-sender">[ THE CREATOR ]</div>
-<div class="mail-body">«Твои пальцы устали? Ты тратишь время впустую, но я наблюдаю за каждым кликом. Прими этот подарок, если осмелишься...»</div>
-<button id="btn-daily-bonus" class="bonus-btn">[ ЗАБРАТЬ БОНУС ДНЯ ]</button>
-<div id="bonus-status" style="margin-top:8px;font-size:15px;color:var(--sekai-bone-dim)"></div>
-</div>
-</div>
-<div class="game-tab-pane active" id="pane-settings">
-<h2 class="tab-title">НАСТРОЙКИ</h2>
-<div class="mail-box" style="text-align:center">
-<div id="game-version-text" style="font-size:clamp(18px,4.5vw,26px);margin-bottom:14px;color:var(--sekai-bone-white)">Версия игры: загрузка...</div>
-<div style="margin:14px 0 6px;text-align:left;font-size:16px;color:var(--sekai-bone-dim)">ИСХОДНЫЙ КОД ИГРЫ (HTML5):</div>
-<textarea id="game-source-code" readonly style="width:100%;height:120px;background:#000;color:#0f0;font-family:monospace;font-size:12px;border:1px solid var(--sekai-bone-dim);padding:8px;box-sizing:border-box;resize:none"></textarea>
-<button id="btn-copy-source" class="dialog-btn" style="width:100%;margin-top:8px;margin-bottom:14px;min-height:44px">[ СКОПИРОВАТЬ КОД ]</button>
-<div id="copy-status-msg" style="font-size:14px;color:var(--sekai-bone-bright);min-height:20px;margin-bottom:10px"></div>
-<button id="btn-reset-progress" class="dialog-btn danger-btn" style="width:100%;min-height:48px">[ СБРОСИТЬ ПРОГРЕСС ]</button>
-<div class="dev-panel">
-<div style="font-size:18px;margin-bottom:8px;color:var(--sekai-bone-white)">РЕЖИМ РАЗРАБОТЧИКА</div>
-<div id="game-dev-auth-block">
-<input type="password" id="game-dev-pin-input" class="dev-input" placeholder="ВВЕДИТЕ ПИН-КОД">
-<button id="btn-game-dev-login" class="dev-btn">ВОЙТИ В РЕЖИМ РАЗРАБОТЧИКА</button>
-<div id="game-dev-auth-status" style="font-size:14px;min-height:18px;color:var(--sekai-blood-red);margin-top:4px"></div>
-</div>
-<div id="game-dev-content-block" style="display:none"></div>
-</div>
-</div>
-</div>
-</div>
-<nav class="hotbar-container" id="hotbar-nav">
-<button id="tab-play" class="hotbar-tab" data-tab="play">[ ИГРА ]</button>
-<button id="tab-upgrades" class="hotbar-tab" data-tab="upgrades">[ МАГАЗИН ]</button>
-<button id="tab-skins" class="hotbar-tab" data-tab="skins">[ СКИНЫ ]</button>
-<button id="tab-achievements" class="hotbar-tab" data-tab="achievements">[ АЧИВКИ ]</button>
-<button id="tab-mail" class="hotbar-tab" data-tab="mail">[ ПОЧТА ]</button>
-<button id="tab-settings" class="hotbar-tab active" data-tab="settings">[ НАСТРОЙКИ ]</button>
-</nav>
-</div>
-</section>
-<section id="custom-dialog" class="custom-dialog"><div class="custom-dialog-box"><div id="custom-dialog-message" class="custom-dialog-message"></div><div class="dialog-btn-row"><button id="custom-dialog-ok" class="dialog-btn">[ OK ]</button><button id="custom-dialog-cancel" class="dialog-btn">[ ОТМЕНА ]</button></div></div></section>
-<section id="update-dialog" class="custom-dialog update-dialog"><div class="custom-dialog-box"><div id="update-dialog-message" class="custom-dialog-message" style="color:var(--sekai-blood-red)"></div><div class="dialog-btn-row"><button id="update-dialog-reload-btn" class="dialog-btn danger-btn">[ ПЕРЕЗАГРУЗИТЬ ]</button></div></div></section>
-<section class="screen" data-show-on="creator"><div class="creator-wrap"><div class="creator-box"><div class="creator-prefix">[ THE CREATOR ]</div><div id="creator-text" class="creator-text">«You can't control me. Ты не можешь уйти»</div><button id="btn-creator-dismiss" class="dialog-btn">[ ВЕРНУТЬСЯ ]</button></div></div></section>
-<section class="screen" data-show-on="newgame_confirm"><div class="confirm-wrap"><div class="confirm-box"><div class="warning-badge">ПРЕДУПРЕЖДЕНИЕ</div><div id="warning-text" class="warning-text">«Ты уверен? Это сотрёт твою память...»</div><div class="dialog-btn-row"><button id="btn-confirm-yes" class="dialog-btn danger-btn">[ СТЕРЕТЬ ]</button><button id="btn-confirm-no" class="dialog-btn">[ НАЗАД ]</button></div></div></div></section>
-<section class="screen" data-show-on="settings"><div class="settings-wrap"><div class="settings-box"><h2 id="settings-title" class="settings-title">НАСТРОЙКИ</h2><div id="menu-version-text" style="font-size:clamp(18px,4.5vw,26px);margin-bottom:20px;color:var(--sekai-bone-white)">Версия игры: загрузка...</div><button id="btn-settings-close" class="dialog-btn">[ НАЗАД В МЕНЮ ]</button></div></div></section>
-<section class="screen" data-show-on="red_flash"><div id="red-flash-overlay" class="red-flash-wrap"><div class="red-flash-text">YOU ARE NOT ALONE</div></div></section>
-</div>
-<audio id="background-music" loop style="display:none" src="https://raw.githubusercontent.com/TwinkCringeGD/kotostclicker2/main/bgm2.mp3"></audio>
-<script>
-const KOTOSTI = [
-{name:"Обычный",file:"cat.png",cost:0,price:"БЕСПЛАТНО",mult:1},
-{name:"Толстый",file:"big_cat.png",cost:1e6,price:"1м",mult:2},
-{name:"Серый",file:"cat_gray.png",cost:1e7,price:"10м",mult:3},
-{name:"Серебряный",file:"silver.png",cost:5e7,price:"50м",mult:5},
-{name:"Золотой",file:"goldenkotost.png",cost:1e8,price:"100м",mult:10},
-{name:"Лазурный",file:"lapiskotost.jpg",cost:5e8,price:"500м",mult:25},
-{name:"Изумрудный",file:"emeraldkotost.jpg",cost:1e9,price:"1б",mult:50},
-{name:"Рубиновый",file:"rubin.png",cost:5e9,price:"5б",mult:100},
-{name:"Космический",file:"cosmickotost.jpg",cost:1e10,price:"10б",mult:500},
-{name:"Самурай",file:"samurai.png",cost:1e11,price:"100б",mult:1000},
-{name:"Магический",file:"magickotost.jpg",cost:1e12,price:"1т",mult:5000}
-];
-function createState(){return{phase:"menu",clickCount:0,ownedSkins:["cat.png"],selectedSkin:"cat.png",multiplier:1,variantLevels:{click:[0,0,0,0,0],auto:[0,0,0,0,0]},activeTab:"play",upgrades:{autoclick:0,clickPower:0},achievements:[],lastDailyBonusAt:0,dailyStreak:0,totalClicksMade:0,creatorSeen:false}}
-let state=createState();
-let CURRENT_GAME_VERSION='1.0B';
-const VERSION_CHECK_URL='https://raw.githubusercontent.com/TwinkCringeGD/kotostclicker2/main/version.txt';
-let creatorDismissed=false;let isPostReset=false;let creatorTypingTimer=null;let lastPlayerClick=Date.now();
-const creatorLines=["Вижу, ты здесь уже не новый. Проведу тебе небольшое обучение так как... это место новое. Кликай по котику","Ты ушел? Я скучал...","Продолжай. Я всё ещё смотрю."];
-const $=(id)=>document.getElementById(id);
+    <div id="game">
+        <canvas id="noise-canvas" width="113" height="209"></canvas>
+        <div class="scanlines-overlay"></div>
+        <div class="crt-vignette"></div>
 
-async function loadVersion(){
-try{
-const res=await fetch(VERSION_CHECK_URL,{cache:'no-store'});
-if(res.ok){
-const ver=(await res.text()).trim();
-CURRENT_GAME_VERSION=ver;
-const v1=$('game-version-text');if(v1)v1.textContent=`Версия игры: v${ver}`;
-const v2=$('menu-version-text');if(v2)v2.textContent=`Версия игры: v${ver}`;
-}
-}catch(e){}
-}
+        <!-- PHASE 1: Main Menu -->
+        <section class="screen" data-show-on="menu">
+            <div class="menu-inner">
+                <header class="header-wrap">
+                    <h1 id="title-main" class="main-title">KOTOST CLICKER II</h1>
+                    <div id="title-sub" class="sub-title">By TwinkCringeGD</div>
+                    <div id="audio-status-hint" class="audio-hint" style="display: none;">[ ЗВУК: АКТИВЕН ]</div>
+                    <div id="save-corrupt-msg">ОШИБКА: СОХРАНЕНИЕ ПОВРЕЖДЕНО</div>
+                </header>
+                <nav class="nav-group">
+                    <button id="btn-continue" class="vhs-btn"><span class="btn-indicator">&gt;</span><span class="btn-text">ПРОДОЛЖИТЬ</span><span class="btn-spacer"></span></button>
+                    <button id="btn-newgame" class="vhs-btn"><span class="btn-indicator">&gt;</span><span class="btn-text">НОВАЯ ИГРА</span><span class="btn-spacer"></span></button>
+                    <button id="btn-settings" class="vhs-btn"><span class="btn-indicator">&gt;</span><span class="btn-text">НАСТРОЙКИ</span><span class="btn-spacer"></span></button>
+                    <button id="btn-exit" class="vhs-btn"><span class="btn-indicator">&gt;</span><span class="btn-text">ВЫЙТИ</span><span class="btn-spacer"></span></button>
+                </nav>
+                <footer class="easter-egg-wrap">
+                    <button id="easter-egg">You are not alone</button>
+                </footer>
+            </div>
+        </section>
 
-async function checkForUpdates(){
-try{
-const res=await fetch(VERSION_CHECK_URL,{cache:'no-store'});
-if(!res.ok)return;
-const remoteVer=(await res.text()).trim();
-if(remoteVer&&remoteVer!==CURRENT_GAME_VERSION){
-$('update-dialog-message').textContent='SYSTEM UPDATE REQUIRED. Пожалуйста, перезагрузите игру. The Creator обновил реальность';
-$('update-dialog').classList.add('open');
-$('update-dialog-reload-btn').onclick=()=>window.location.reload();
-}
-}catch(e){}
-}
+        <!-- PHASE 2: Game Screen -->
+        <section class="screen" data-show-on="game" id="game-screen" style="display: flex;">
+            <div class="game-screen-wrap">
+                <div class="game-hud">
+                    <div class="game-hud-score">СЧЁТ: <span id="click-counter">1</span></div>
+                    <button id="btn-back-to-menu" class="game-hud-back">[ В МЕНЮ ]</button>
+                </div>
+                <div id="creator-top-caption" class="creator-top-caption"></div>
 
-function startCreatorDialogue(){
-const line=$('creator-top-caption');if(!line)return;
-const first=!state.creatorSeen;state.creatorSeen=true;
-const postResetText='Ну и для чего ты это сделал?...';
-const text=isPostReset?postResetText:(first?creatorLines[0]:creatorLines[1]);
-let i=0;line.textContent='';clearInterval(creatorTypingTimer);
-creatorTypingTimer=setInterval(()=>{line.textContent=text.slice(0,++i);if(i>=text.length)clearInterval(creatorTypingTimer);},34);
-lastPlayerClick=Date.now();
-}
+                <div class="game-tab-content-area">
+                    <!-- TAB: ИГРА -->
+                    <div class="game-tab-pane" id="pane-play">
+                        <div id="creator-line" class="creator-subtitle"></div>
+                        <div class="clicker-center">
+                            <img id="creator-sprite" class="creator-sprite-slot hidden-creator" src="https://raw.githubusercontent.com/TwinkCringeGD/kotostclicker2/main/sprite1.png">
+                            <div class="transition-noise" id="transition-noise"></div>
+                            <img id="cat-display" src="https://github.com/TwinkCringeGD/kotostclicker2/raw/main/cat.png" class="cat-click-anim">
+                            <div class="game-subtext">«КЛИКАЙ ПОКА МОЖЕШЬ...»</div>
+                            <div id="click-multiplier" class="game-subtext">МНОЖИТЕЛЬ: x1</div>
+                            <div id="cps-display" class="game-subtext">АВТОКЛИК: 0/сек</div>
+                        </div>
+                    </div>
 
-function updateHud(){
-$('click-counter').textContent=String(state.clickCount);
-const skin=KOTOSTI.find(s=>s.file===state.selectedSkin)||KOTOSTI[0];
-$('click-multiplier').textContent=`МНОЖИТЕЛЬ: x${skin.mult}`;
-$('cps-display').textContent=`АВТОКЛИК: ${state.upgrades.autoclick||0}/сек`;
-}
+                    <!-- TAB: МАГАЗИН -->
+                    <div class="game-tab-pane" id="pane-upgrades">
+                        <div class="store-subtabs" style="display: none;"><button id="upgrade-subtab" class="active">УЛУЧШЕНИЯ</button><button id="variant-subtab">ВАРИАНТЫ</button></div>
+                        <div id="upgrades-list" class="upgrades-list" style="display: flex;"></div>
+                        <div id="variant-list" class="variant-list"></div>
+                    </div>
 
-function renderShop(){
-const list=$('skin-list');if(!list)return;list.innerHTML='';
-KOTOSTI.forEach(skin=>{
-const card=document.createElement('div');card.className='skin-card';
-card.innerHTML=`<img src="https://github.com/TwinkCringeGD/kotostclicker2/raw/main/${skin.file}" alt="${skin.name}"><strong>${skin.name}</strong><span>${skin.price} · x${skin.mult}</span><button>${state.ownedSkins.includes(skin.file)?'ВЫБРАТЬ':skin.price}</button>`;
-const btn=card.querySelector('button');
-btn.onclick=()=>{
-if(state.ownedSkins.includes(skin.file)){state.selectedSkin=skin.file;state.multiplier=skin.mult;}
-else if(state.clickCount>=skin.cost){state.clickCount-=skin.cost;state.ownedSkins.push(skin.file);state.selectedSkin=skin.file;state.multiplier=skin.mult;}
-updateHud();renderShop();saveProgress();
-};
-list.appendChild(card);
-});
-}
+                    <!-- TAB: СКИНЫ -->
+                    <div class="game-tab-pane" id="pane-skins">
+                        <h2 class="tab-title">СКИНЫ</h2>
+                        <div id="skin-list" class="skin-list"></div>
+                    </div>
 
-function renderAchievements(){
-const list=$('achievements-list');if(!list)return;list.innerHTML='';
-const ach=[
-{id:'first_click',name:'Первый клик',desc:'Сделай первый клик по коту',cond:()=>state.totalClicksMade>=1},
-{id:'clicks_100',name:'Одержимость',desc:'Набери 100 кликов',cond:()=>state.clickCount>=100},
-{id:'first_skin',name:'Новая оболочка',desc:'Открой хотя бы 2 скина',cond:()=>state.ownedSkins.length>=2}
-];
-ach.forEach(a=>{
-const unlocked=state.achievements.includes(a.id);
-const div=document.createElement('div');div.className='log-item '+(unlocked?'unlocked':'locked');
-div.textContent=unlocked?`[SYSTEM] Достижение: ${a.name} — ${a.desc} [РАЗБЛОКИРОВАНО]`:`[SYSTEM] Запись зашифрована: ${a.name} [ЗАБЛОКИРОВАНО]`;
-list.appendChild(div);
-});
-}
+                    <!-- TAB: АЧИВКИ -->
+                    <div class="game-tab-pane" id="pane-achievements">
+                        <h2 class="tab-title">СИСТЕМНЫЕ ЛОГИ</h2>
+                        <div id="achievements-list" class="logs-list"></div>
+                    </div>
 
-function checkAchievements(){
-const a1=state.totalClicksMade>=1;const a2=state.clickCount>=100;const a3=state.ownedSkins.length>=2;
-let changed=false;
-if(a1&&!state.achievements.includes('first_click')){state.achievements.push('first_click');changed=true;}
-if(a2&&!state.achievements.includes('clicks_100')){state.achievements.push('clicks_100');changed=true;}
-if(a3&&!state.achievements.includes('first_skin')){state.achievements.push('first_skin');changed=true;}
-if(changed)renderAchievements();
-}
+                    <!-- TAB: ПОЧТА -->
+                    <div class="game-tab-pane" id="pane-mail">
+                        <h2 class="tab-title">ПОЧТА</h2>
+                        <div class="mail-box">
+                            <div class="mail-sender">[ THE CREATOR ]</div>
+                            <div class="mail-body">«Твои пальцы устали? Ты тратишь время впустую, но я наблюдаю за каждым кликом. Прими этот подарок, если осмелишься...»</div>
+                            <button id="btn-daily-bonus" class="bonus-btn">[ ЗАБРАТЬ БОНУС ДНЯ ]</button>
+                            <div id="bonus-status" style="margin-top: 8px; font-size: 15px; color: var(--sekai-bone-dim);"></div>
+                        </div>
+                    </div>
 
-function updateMailStatus(){
-const now=Date.now();
-const rem=Math.max(0,86400000-(now-(state.lastDailyBonusAt||0)));
-const btn=$('btn-daily-bonus');
-if(btn){btn.disabled=rem>0;btn.textContent=rem>0?'[ БОНУС ПОЛУЧЕН ]':'[ ЗАБРАТЬ БОНУС ДНЯ ]';}
-$('bonus-status').textContent=rem>0?`Следующий через ${Math.ceil(rem/3600000)} ч.`:`Серия ${Math.min((state.dailyStreak||0)+1,7)}/7. Награда: ${(Math.min((state.dailyStreak||0)+1,7))*1000} котостей.`;
-}
+                    <!-- TAB: НАСТРОЙКИ -->
+                    <div class="game-tab-pane active" id="pane-settings">
+                        <h2 class="tab-title">НАСТРОЙКИ</h2>
+                        <div class="mail-box" style="text-align:center;">
+                            <div id="game-version-text" style="font-size:clamp(18px,4.5vw,26px); margin-bottom:14px; color:var(--sekai-bone-white);">Версия игры: загрузка...</div>
+                            <div style="margin: 14px 0 6px; text-align: left; font-size: 16px; color: var(--sekai-bone-dim);">ИСХОДНЫЙ КОД ИГРЫ (HTML5):</div>
+                            <textarea id="game-source-code" readonly="" style="width:100%; height:120px; background:#000; color:#0f0; font-family:monospace; font-size:12px; border:1px solid var(--sekai-bone-dim); padding:8px; box-sizing:border-box; resize:none;"></textarea>
+                            <button id="btn-copy-source" class="dialog-btn" style="width:100%; margin-top:8px; margin-bottom:14px; min-height:44px;">[ СКОПИРОВАТЬ КОД ]</button>
+                            <div id="copy-status-msg" style="font-size:14px; color:var(--sekai-bone-bright); min-height:20px; margin-bottom:10px;"></div>
+                            <button id="btn-reset-progress" class="dialog-btn danger-btn" style="width:100%; min-height:48px;">[ СБРОСИТЬ ПРОГРЕСС ]</button>
+                            <div class="dev-panel" style="margin-top:16px;">
+                                <div style="font-size:18px; margin-bottom:8px; color:var(--sekai-bone-white);">РЕЖИМ РАЗРАБОТЧИКА</div>
+                                <div id="game-dev-auth-block">
+                                    <input type="password" id="game-dev-pin-input" class="dev-input" placeholder="ВВЕДИТЕ ПИН-КОД" autocomplete="off">
+                                    <button id="btn-game-dev-login" class="dev-btn">ВОЙТИ В РЕЖИМ РАЗРАБОТЧИКА</button>
+                                    <div id="game-dev-auth-status" style="font-size:14px; min-height:18px; color:var(--sekai-blood-red); margin-top:4px;"></div>
+                                </div>
+                                <div id="game-dev-content-block" style="display:none;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-function handleClaimDailyBonus(){
-const now=Date.now();
-if(state.lastDailyBonusAt&&now-state.lastDailyBonusAt<86400000)return;
-state.dailyStreak=(state.lastDailyBonusAt&&now-state.lastDailyBonusAt<172800000)?((state.dailyStreak||0)%7)+1:1;
-state.clickCount+=state.dailyStreak*1000;
-state.lastDailyBonusAt=now;
-updateHud();updateMailStatus();saveProgress();
-}
+                <!-- Bottom Hotbar -->
+                <nav class="hotbar-container" id="hotbar-nav">
+                    <button id="tab-play" class="hotbar-tab" data-tab="play">[ ИГРА ]</button>
+                    <button id="tab-upgrades" class="hotbar-tab" data-tab="upgrades">[ МАГАЗИН ]</button>
+                    <button id="tab-skins" class="hotbar-tab" data-tab="skins">[ СКИНЫ ]</button>
+                    <button id="tab-achievements" class="hotbar-tab" data-tab="achievements">[ АЧИВКИ ]</button>
+                    <button id="tab-mail" class="hotbar-tab" data-tab="mail">[ ПОЧТА ]</button>
+                    <button id="tab-settings" class="hotbar-tab active" data-tab="settings">[ НАСТРОЙКИ ]</button>
+                </nav>
+            </div>
+        </section>
 
-function saveProgress(){
-localStorage.setItem('kotost-clicker-ii-save',JSON.stringify({
-clickCount:state.clickCount,ownedSkins:state.ownedSkins,selectedSkin:state.selectedSkin,
-upgrades:state.upgrades,achievements:state.achievements,lastDailyBonusAt:state.lastDailyBonusAt,
-dailyStreak:state.dailyStreak,totalClicksMade:state.totalClicksMade,variantLevels:state.variantLevels
-}));
-}
+        <!-- Custom Dialog -->
+        <section id="custom-dialog" class="custom-dialog"><div class="custom-dialog-box"><div id="custom-dialog-message" class="custom-dialog-message"></div><div class="dialog-btn-row"><button id="custom-dialog-ok" class="dialog-btn">[ OK ]</button><button id="custom-dialog-cancel" class="dialog-btn">[ ОТМЕНА ]</button></div></div></section>
+        <section id="update-dialog" class="custom-dialog update-dialog"><div class="custom-dialog-box"><div id="update-dialog-message" class="custom-dialog-message" style="color:var(--sekai-blood-red); text-shadow:1px 0 2px rgba(255,0,0,0.8);"></div><div class="dialog-btn-row"><button id="update-dialog-reload-btn" class="dialog-btn danger-btn">[ ПЕРЕЗАГРУЗИТЬ ]</button></div></div></section>
 
-function loadProgress(){
-try{
-const saved=JSON.parse(localStorage.getItem('kotost-clicker-ii-save')||'null');
-if(saved){
-state.clickCount=Number(saved.clickCount)||0;
-state.ownedSkins=Array.isArray(saved.ownedSkins)?saved.ownedSkins:['cat.png'];
-state.selectedSkin=state.ownedSkins.includes(saved.selectedSkin)?saved.selectedSkin:'cat.png';
-if(saved.upgrades)state.upgrades=Object.assign(state.upgrades,saved.upgrades);
-if(Array.isArray(saved.achievements))state.achievements=saved.achievements;
-state.lastDailyBonusAt=Number(saved.lastDailyBonusAt)||0;
-state.dailyStreak=Number(saved.dailyStreak)||0;
-state.totalClicksMade=Number(saved.totalClicksMade)||0;
-if(saved.variantLevels)state.variantLevels=saved.variantLevels;
-}
-}catch(e){}
-updateHud();updateMailStatus();
-}
+        <!-- PHASE 3: Creator Response -->
+        <section class="screen" data-show-on="creator"><div class="creator-wrap"><div class="creator-box"><div class="creator-prefix">[ THE CREATOR ]</div><div id="creator-text" class="creator-text">«You can't control me. Ты не можешь уйти»</div><button id="btn-creator-dismiss" class="dialog-btn">[ ВЕРНУТЬСЯ ]</button></div></div></section>
 
-function switchTab(tabId){
-state.activeTab=tabId;
-document.querySelectorAll('.hotbar-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tabId));
-document.querySelectorAll('.game-tab-pane').forEach(p=>p.classList.toggle('active',p.id===`pane-${tabId}`));
-if(tabId==='skins')renderShop();
-if(tabId==='achievements')renderAchievements();
-if(tabId==='mail')updateMailStatus();
-}
+        <!-- PHASE 4: Confirm Wipe -->
+        <section class="screen" data-show-on="newgame_confirm"><div class="confirm-wrap"><div class="confirm-box"><div class="warning-badge">ПРЕДУПРЕЖДЕНИЕ</div><div id="warning-text" class="warning-text">«Ты уверен? Это сотрёт твою память...»</div><div class="dialog-btn-row"><button id="btn-confirm-yes" class="dialog-btn danger-btn">[ СТЕРЕТЬ ]</button><button id="btn-confirm-no" class="dialog-btn">[ НАЗАД ]</button></div></div></div></section>
 
-document.getElementById('btn-continue').addEventListener('click',()=>{
-state.phase='game';document.body.dataset.phase='game';switchTab('play');startCreatorDialogue();
-const music=$('background-music');if(music){music.volume=0.3;music.play().catch(()=>{});}
-});
+        <!-- PHASE 5: Settings Overlay -->
+        <section class="screen" data-show-on="settings"><div class="settings-wrap"><div class="settings-box"><h2 id="settings-title" class="settings-title">НАСТРОЙКИ</h2><div id="menu-version-text" style="font-size:clamp(18px,4.5vw,26px); margin-bottom:20px; color:var(--sekai-bone-white);">Версия игры: загрузка...</div><button id="btn-settings-close" class="dialog-btn">[ НАЗАД В МЕНЮ ]</button></div></div></section>
 
-document.getElementById('cat-display').addEventListener('click',()=>{
-state.totalClicksMade++;
-state.clickCount+=state.multiplier+(state.upgrades.clickPower||0);
-updateHud();checkAchievements();saveProgress();
-const cat=$('cat-display');cat.classList.remove('cat-click-anim');void cat.offsetWidth;cat.classList.add('cat-click-anim');
-});
+        <!-- PHASE 6: Red Flash -->
+        <section class="screen" data-show-on="red_flash"><div id="red-flash-overlay" class="red-flash-wrap"><div class="red-flash-text">YOU ARE NOT ALONE</div></div></section>
+    </div>
 
-document.getElementById('btn-back-to-menu').addEventListener('click',()=>{state.phase='menu';document.body.dataset.phase='menu';});
-document.querySelectorAll('.hotbar-tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+    <audio id="background-music" loop="" style="display:none" src="https://raw.githubusercontent.com/TwinkCringeGD/kotostclicker2/main/bgm2.mp3"></audio>
 
-document.getElementById('btn-daily-bonus').addEventListener('click',handleClaimDailyBonus);
+    <script>
+        const KOTOSTI = [
+            {name:"Обычный",file:"cat.png",cost:0,price:"БЕСПЛАТНО",mult:1},
+            {name:"Толстый",file:"big_cat.png",cost:1e6,price:"1м",mult:2},
+            {name:"Серый",file:"cat_gray.png",cost:1e7,price:"10м",mult:3},
+            {name:"Серебряный",file:"silver.png",cost:5e7,price:"50м",mult:5},
+            {name:"Золотой",file:"goldenkotost.png",cost:1e8,price:"100м",mult:10},
+            {name:"Лазурный",file:"lapiskotost.jpg",cost:5e8,price:"500м",mult:25},
+            {name:"Изумрудный",file:"emeraldkotost.jpg",cost:1e9,price:"1б",mult:50},
+            {name:"Рубиновый",file:"rubin.png",cost:5e9,price:"5б",mult:100},
+            {name:"Космический",file:"cosmickotost.jpg",cost:1e10,price:"10б",mult:500},
+            {name:"Самурай",file:"samurai.png",cost:1e11,price:"100б",mult:1000},
+            {name:"Магический",file:"magickotost.jpg",cost:1e12,price:"1т",mult:5000}
+        ];
+        function createState(){return{phase:"menu",clickCount:0,ownedSkins:["cat.png"],selectedSkin:"cat.png",multiplier:1,variantLevels:{click:[0,0,0,0,0],auto:[0,0,0,0,0]},activeTab:"play",upgrades:{autoclick:0,clickPower:0},achievements:[],lastDailyBonusAt:0,dailyStreak:0,totalClicksMade:0,creatorSeen:false}}
+        let state=createState();
+        let CURRENT_GAME_VERSION='1.0B';
+        const VERSION_CHECK_URL='https://raw.githubusercontent.com/TwinkCringeGD/kotostclicker2/main/version.txt';
+        let creatorDismissed=false;let isPostReset=false;let creatorTypingTimer=null;let lastPlayerClick=Date.now();
+        const creatorLines=["Вижу, ты здесь уже не новый. Проведу тебе небольшое обучение так как... это место новое. Кликай по котику","Ты ушел? Я скучал...","Продолжай. Я всё ещё смотрю."];
+        const $=(id)=>document.getElementById(id);
 
-document.getElementById('btn-reset-progress').addEventListener('click',()=>{
-if(confirm('Ты уверен? Это сотрёт твою память...')){
-localStorage.removeItem('kotost-clicker-ii-save');
-state=createState();loadProgress();renderShop();updateHud();
-}
-});
+        async function loadVersion(){
+            try{
+                const res=await fetch(VERSION_CHECK_URL,{cache:'no-store'});
+                if(res.ok){
+                    const ver=(await res.text()).trim();
+                    CURRENT_GAME_VERSION=ver;
+                    const v1=$('game-version-text');if(v1)v1.textContent=`Версия игры: v${ver}`;
+                    const v2=$('menu-version-text');if(v2)v2.textContent=`Версия игры: v${ver}`;
+                }
+            }catch(e){}
+        }
 
-document.getElementById('btn-settings').addEventListener('click',()=>{state.phase='settings';document.body.dataset.phase='settings';});
-document.getElementById('btn-settings-close').addEventListener('click',()=>{state.phase='menu';document.body.dataset.phase='menu';});
+        async function checkForUpdates(){
+            try{
+                const res=await fetch(VERSION_CHECK_URL,{cache:'no-store'});
+                if(!res.ok)return;
+                const remoteVer=(await res.text()).trim();
+                if(remoteVer&&remoteVer!==CURRENT_GAME_VERSION){
+                    $('update-dialog-message').textContent='SYSTEM UPDATE REQUIRED. Пожалуйста, перезагрузите игру. The Creator обновил реальность';
+                    $('update-dialog').classList.add('open');
+                    $('update-dialog-reload-btn').onclick=()=>window.location.reload();
+                }
+            }catch(e){}
+        }
 
-document.getElementById('btn-newgame').addEventListener('click',()=>{
-if(confirm('Ты уверен? Это сотрёт твою память...')){
-state=createState();isPostReset=true;saveProgress();
-document.body.dataset.phase='game';switchTab('play');startCreatorDialogue();
-}
-});
+        function startCreatorDialogue(){
+            const line=$('creator-top-caption');if(!line)return;
+            const first=!state.creatorSeen;state.creatorSeen=true;
+            const postResetText='Ну и для чего ты это сделал?...';
+            const text=isPostReset?postResetText:(first?creatorLines[0]:creatorLines[1]);
+            let i=0;line.textContent='';clearInterval(creatorTypingTimer);
+            creatorTypingTimer=setInterval(()=>{line.textContent=text.slice(0,++i);if(i>=text.length)clearInterval(creatorTypingTimer);},34);
+            lastPlayerClick=Date.now();
+        }
 
-document.getElementById('btn-exit').addEventListener('click',()=>{
-alert("System Error: You can't control me");
-});
+        function updateHud(){
+            $('click-counter').textContent=String(state.clickCount);
+            const skin=KOTOSTI.find(s=>s.file===state.selectedSkin)||KOTOSTI[0];
+            $('click-multiplier').textContent=`МНОЖИТЕЛЬ: x${skin.mult}`;
+            $('cps-display').textContent=`АВТОКЛИК: ${state.upgrades.autoclick||0}/сек`;
+        }
 
-document.getElementById('easter-egg').addEventListener('click',()=>{
-document.body.classList.add('noise-extreme');
-setTimeout(()=>{document.body.classList.remove('noise-extreme');},1000);
-});
+        function renderShop(){
+            const list=$('skin-list');if(!list)return;list.innerHTML='';
+            KOTOSTI.forEach(skin=>{
+                const card=document.createElement('div');card.className='skin-card';
+                card.innerHTML=`<img src="https://github.com/TwinkCringeGD/kotostclicker2/raw/main/${skin.file}" alt="${skin.name}"><strong>${skin.name}</strong><span>${skin.price} · x${skin.mult}</span><button>${state.ownedSkins.includes(skin.file)?'ВЫБРАТЬ':skin.price}</button>`;
+                const btn=card.querySelector('button');
+                btn.onclick=()=>{
+                    if(state.ownedSkins.includes(skin.file)){state.selectedSkin=skin.file;state.multiplier=skin.mult;}
+                    else if(state.clickCount>=skin.cost){state.clickCount-=skin.cost;state.ownedSkins.push(skin.file);state.selectedSkin=skin.file;state.multiplier=skin.mult;}
+                    updateHud();renderShop();saveProgress();
+                };
+                list.appendChild(card);
+            });
+        }
 
-loadProgress();
-renderShop();
-renderAchievements();
-updateMailStatus();
-updateHud();
-loadVersion();
-checkForUpdates();
+        function renderAchievements(){
+            const list=$('achievements-list');if(!list)return;list.innerHTML='';
+            const ach=[
+                {id:'first_click',name:'Первый клик',desc:'Сделай первый клик по коту',cond:()=>state.totalClicksMade>=1},
+                {id:'clicks_100',name:'Одержимость',desc:'Набери 100 кликов',cond:()=>state.clickCount>=100},
+                {id:'first_skin',name:'Новая оболочка',desc:'Открой хотя бы 2 скина',cond:()=>state.ownedSkins.length>=2}
+            ];
+            ach.forEach(a=>{
+                const unlocked=state.achievements.includes(a.id);
+                const div=document.createElement('div');div.className='log-item '+(unlocked?'unlocked':'locked');
+                div.textContent=unlocked?`[SYSTEM] Достижение: ${a.name} — ${a.desc} [РАЗБЛОКИРОВАНО]`:`[SYSTEM] Запись зашифрована: ${a.name} [ЗАБЛОКИРОВАНО]`;
+                list.appendChild(div);
+            });
+        }
 
-document.body.addEventListener('click',()=>{
-const bgm=$('background-music');
-if(bgm&&bgm.paused){bgm.volume=0.3;bgm.play().catch(()=>{});}
-},{once:true});
-</script>
+        function checkAchievements(){
+            const a1=state.totalClicksMade>=1;const a2=state.clickCount>=100;const a3=state.ownedSkins.length>=2;
+            let changed=false;
+            if(a1&&!state.achievements.includes('first_click')){state.achievements.push('first_click');changed=true;}
+            if(a2&&!state.achievements.includes('clicks_100')){state.achievements.push('clicks_100');changed=true;}
+            if(a3&&!state.achievements.includes('first_skin')){state.achievements.push('first_skin');changed=true;}
+            if(changed)renderAchievements();
+        }
+
+        function updateMailStatus(){
+            const now=Date.now();
+            const rem=Math.max(0,86400000-(now-(state.lastDailyBonusAt||0)));
+            const btn=$('btn-daily-bonus');
+            if(btn){btn.disabled=rem>0;btn.textContent=rem>0?'[ БОНУС ПОЛУЧЕН ]':'[ ЗАБРАТЬ БОНУС ДНЯ ]';}
+            $('bonus-status').textContent=rem>0?`Следующий через ${Math.ceil(rem/3600000)} ч.`:`Серия ${Math.min((state.dailyStreak||0)+1,7)}/7. Награда: ${(Math.min((state.dailyStreak||0)+1,7))*1000} котостей.`;
+        }
+
+        function handleClaimDailyBonus(){
+            const now=Date.now();
+            if(state.lastDailyBonusAt&&now-state.lastDailyBonusAt<86400000)return;
+            state.dailyStreak=(state.lastDailyBonusAt&&now-state.lastDailyBonusAt<172800000)?((state.dailyStreak||0)%7)+1:1;
+            state.clickCount+=state.dailyStreak*1000;
+            state.lastDailyBonusAt=now;
+            updateHud();updateMailStatus();saveProgress();
+        }
+
+        function saveProgress(){
+            localStorage.setItem('kotost-clicker-ii-save',JSON.stringify({
+                clickCount:state.clickCount,ownedSkins:state.ownedSkins,selectedSkin:state.selectedSkin,
+                upgrades:state.upgrades,achievements:state.achievements,lastDailyBonusAt:state.lastDailyBonusAt,
+                dailyStreak:state.dailyStreak,totalClicksMade:state.totalClicksMade,variantLevels:state.variantLevels
+            }));
+        }
+
+        function loadProgress(){
+            try{
+                const saved=JSON.parse(localStorage.getItem('kotost-clicker-ii-save')||'null');
+                if(saved){
+                    state.clickCount=Number(saved.clickCount)||0;
+                    state.ownedSkins=Array.isArray(saved.ownedSkins)?saved.ownedSkins:['cat.png'];
+                    state.selectedSkin=state.ownedSkins.includes(saved.selectedSkin)?saved.selectedSkin:'cat.png';
+                    if(saved.upgrades)state.upgrades=Object.assign(state.upgrades,saved.upgrades);
+                    if(Array.isArray(saved.achievements))state.achievements=saved.achievements;
+                    state.lastDailyBonusAt=Number(saved.lastDailyBonusAt)||0;
+                    state.dailyStreak=Number(saved.dailyStreak)||0;
+                    state.totalClicksMade=Number(saved.totalClicksMade)||0;
+                    if(saved.variantLevels)state.variantLevels=saved.variantLevels;
+                }
+            }catch(e){}
+            updateHud();updateMailStatus();
+        }
+
+        function switchTab(tabId){
+            state.activeTab=tabId;
+            document.querySelectorAll('.hotbar-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tabId));
+            document.querySelectorAll('.game-tab-pane').forEach(p=>p.classList.toggle('active',p.id===`pane-${tabId}`));
+            if(tabId==='skins')renderShop();
+            if(tabId==='achievements')renderAchievements();
+            if(tabId==='mail')updateMailStatus();
+        }
+
+        document.getElementById('btn-continue').addEventListener('click',()=>{
+            state.phase='game';document.body.dataset.phase='game';switchTab('play');startCreatorDialogue();
+            const music=$('background-music');if(music){music.volume=0.3;music.play().catch(()=>{});}
+        });
+
+        document.getElementById('cat-display').addEventListener('click',()=>{
+            state.totalClicksMade++;
+            state.clickCount+=state.multiplier+(state.upgrades.clickPower||0);
+            updateHud();checkAchievements();saveProgress();
+            const cat=$('cat-display');cat.classList.remove('cat-click-anim');void cat.offsetWidth;cat.classList.add('cat-click-anim');
+        });
+
+        document.getElementById('btn-back-to-menu').addEventListener('click',()=>{state.phase='menu';document.body.dataset.phase='menu';});
+        document.querySelectorAll('.hotbar-tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+
+        document.getElementById('btn-daily-bonus').addEventListener('click',handleClaimDailyBonus);
+
+        document.getElementById('btn-reset-progress').addEventListener('click',()=>{
+            if(confirm('Ты уверен? Это сотрёт твою память...')){
+                localStorage.removeItem('kotost-clicker-ii-save');
+                state=createState();loadProgress();renderShop();updateHud();
+            }
+        });
+
+        document.getElementById('btn-settings').addEventListener('click',()=>{state.phase='settings';document.body.dataset.phase='settings';});
+        document.getElementById('btn-settings-close').addEventListener('click',()=>{state.phase='menu';document.body.dataset.phase='menu';});
+
+        document.getElementById('btn-newgame').addEventListener('click',()=>{
+            if(confirm('Ты уверен? Это сотрёт твою память...')){
+                state=createState();isPostReset=true;saveProgress();
+                document.body.dataset.phase='game';switchTab('play');startCreatorDialogue();
+            }
+        });
+
+        document.getElementById('btn-exit').addEventListener('click',()=>{
+            alert("System Error: You can't control me");
+        });
+
+        document.getElementById('easter-egg').addEventListener('click',()=>{
+            document.body.classList.add('noise-extreme');
+            setTimeout(()=>{document.body.classList.remove('noise-extreme');},1000);
+        });
+
+        loadProgress();
+        renderShop();
+        renderAchievements();
+        updateMailStatus();
+        updateHud();
+        loadVersion();
+        checkForUpdates();
+
+        document.body.addEventListener('click',()=>{
+            const bgm=$('background-music');
+            if(bgm&&bgm.paused){bgm.volume=0.3;bgm.play().catch(()=>{});}
+        },{once:true});
+    </script>
 </body>
 </html>
