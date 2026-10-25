@@ -2907,6 +2907,73 @@ window.sekaiEditable = {
         const activeBtn = document.querySelector(`.lang-btn[onclick*="${lang}"]`);
         if (activeBtn) { activeBtn.style.borderColor = 'var(--sekai-blood-red)'; activeBtn.style.color = 'var(--sekai-blood-red)'; }
       };
+            // ПЕРЕВОД ДИНАМИЧЕСКИХ ЭЛЕМЕНТОВ (Скины, Улучшения, Ачивки)
+      function translateDynamicElements() {
+        // Переводим названия скинов в магазине
+        document.querySelectorAll('.skin-card strong').forEach(el => {
+          const ruText = el.textContent.trim();
+          if (window.translationsMap[ruText]) {
+            el.textContent = window.translationsMap[ruText];
+          }
+        });
+
+        // Переводим названия и описания улучшений
+        document.querySelectorAll('.upgrade-name').forEach(el => {
+          let text = el.textContent;
+          for (const [ru, en] of Object.entries(window.translationsMap)) {
+            if (text.includes(ru)) text = text.replace(ru, en);
+          }
+          el.textContent = text;
+        });
+
+        document.querySelectorAll('.upgrade-desc').forEach(el => {
+          let text = el.textContent;
+          for (const [ru, en] of Object.entries(window.translationsMap)) {
+            if (text.includes(ru)) text = text.replace(ru, en);
+          }
+          el.textContent = text;
+        });
+
+        // Переводим ачивки
+        document.querySelectorAll('.log-item').forEach(el => {
+          let text = el.textContent;
+          for (const [ru, en] of Object.entries(window.translationsMap)) {
+            if (text.includes(ru)) text = text.replace(ru, en);
+          }
+          el.textContent = text;
+        });
+
+        // Переводим почту и диалоги
+        document.querySelectorAll('.mail-body, .mail-sender, #creator-top-caption').forEach(el => {
+          let text = el.textContent;
+          for (const [ru, en] of Object.entries(window.translationsMap)) {
+            if (text.includes(ru)) text = text.replace(ru, en);
+          }
+          el.textContent = text;
+        });
+      }
+
+      // Вызываем перевод при клике на кнопку языка
+      const originalChangeLang = window.changeLang;
+      window.changeLang = function(lang) {
+        originalChangeLang(lang);
+        if (lang === 'en') {
+          translateDynamicElements();
+        } else {
+          // Если переключаем на русский — перезагружаем страницу (самый простой способ)
+          window.location.reload();
+        }
+      };
+
+      // И при каждом обновлении интерфейса (через MutationObserver)
+      const observer = new MutationObserver(() => {
+        // Если язык английский — переводим новые элементы
+        const activeBtn = document.querySelector('.lang-btn[onclick*="en"]');
+        if (activeBtn && activeBtn.style.borderColor === 'var(--sekai-blood-red)') {
+          translateDynamicElements();
+        }
+      });
+      observer.observe(document.body, { childList: true, subtree: true });
     </script>
     
   </body>
