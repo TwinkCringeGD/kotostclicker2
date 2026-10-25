@@ -2072,6 +2072,7 @@ window.sekaiEditable = {
             const btn=document.createElement('button');btn.className='upgrade-btn';btn.textContent=level>=50?'MAX':`${cost} к`;btn.disabled=!unlocked||level>=50||state.clickCount<cost;
             btn.onclick=()=>{if(!unlocked||level>=50||state.clickCount<cost)return;state.clickCount-=cost;state.variantLevels[key][index]++;updateHud();renderVariants();saveProgress();};
             card.append(info,btn);list.appendChild(card);
+                    translateDynamicElements();
           });
         });
       }
@@ -2130,6 +2131,7 @@ window.sekaiEditable = {
 
           card.appendChild(btn);
           container.appendChild(card);
+                  translateDynamicElements();
         });
       }
 
@@ -2156,7 +2158,7 @@ window.sekaiEditable = {
         }
       }
 
-      function renderAchievements() {
+       function renderAchievements() {
         const list = document.getElementById('achievements-list');
         if (!list) return;
         list.innerHTML = '';
@@ -2169,6 +2171,8 @@ window.sekaiEditable = {
             : `[SYSTEM] Запись зашифрована: ${ach.title} [ЗАБЛОКИРОВАНО]`;
           list.appendChild(item);
         });
+        translateDynamicElements(); // <--- ВЫЗОВ ПОСЛЕ ЦИКЛА
+       }
       }
 
       function updateMailStatus() {
@@ -2238,6 +2242,7 @@ window.sekaiEditable = {
               checkAchievements();
               saveProgress();
             }
+                    translateDynamicElements();
             renderShop();
           };
         });
