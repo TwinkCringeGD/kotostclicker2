@@ -1446,6 +1446,13 @@ window.sekaiEditable = {
                 <button id="btn-copy-source" class="dialog-btn" style="width:100%; margin-top:8px; margin-bottom:14px; min-height:44px;">[ СКОПИРОВАТЬ КОД ]</button>
                 <div id="copy-status-msg" style="font-size:14px; color:var(--sekai-bone-bright); min-height:20px; margin-bottom:10px;">[ КОД СКОПИРОВАН В БУФЕР ]</div>
                 <button id="btn-reset-progress" data-spec-id="btn-reset-progress" class="dialog-btn danger-btn" style="width:100%; min-height:48px;">[ СБРОСИТЬ ПРОГРЕСС ]</button>
+                <div style="margin-top: 20px; padding: 10px; border-top: 1px dashed var(--sekai-bone-dim); text-align: center;">
+  <div style="font-size: 18px; margin-bottom: 10px; color: var(--sekai-bone-white);">ЯЗЫК / LANGUAGE</div>
+  <div style="display: flex; justify-content: center; gap: 10px;">
+    <button onclick="window.changeLang('ru')" class="dialog-btn lang-btn" style="min-height: 40px; padding: 5px 20px;">[ РУССКИЙ ]</button>
+    <button onclick="window.changeLang('en')" class="dialog-btn lang-btn" style="min-height: 40px; padding: 5px 20px;">[ ENGLISH ]</button>
+  </div>
+</div>
                 <div class="dev-panel" style="margin-top:16px;">
                   <div style="font-size:18px; margin-bottom:8px; color:var(--sekai-bone-white);">РЕЖИМ РАЗРАБОТЧИКА</div>
                   <div id="game-dev-auth-block">
@@ -1521,6 +1528,13 @@ window.sekaiEditable = {
             <button id="btn-settings-close" data-spec-id="btn-settings-close" class="dialog-btn">
               [ НАЗАД В МЕНЮ ]
             </button>
+            <div style="margin-top: 20px; padding: 10px; border-top: 1px dashed var(--sekai-bone-dim); text-align: center;">
+  <div style="font-size: 18px; margin-bottom: 10px; color: var(--sekai-bone-white);">ЯЗЫК / LANGUAGE</div>
+  <div style="display: flex; justify-content: center; gap: 10px;">
+    <button onclick="window.changeLang('ru')" class="dialog-btn lang-btn" style="min-height: 40px; padding: 5px 20px;">[ РУССКИЙ ]</button>
+    <button onclick="window.changeLang('en')" class="dialog-btn lang-btn" style="min-height: 40px; padding: 5px 20px;">[ ENGLISH ]</button>
+  </div>
+</div>
             <div class="dev-panel" style="margin-top:20px; text-align:left;">
               <div style="font-size:18px; margin-bottom:8px; color:var(--sekai-bone-white);">РЕЖИМ РАЗРАБОТЧИКА</div>
               <div id="menu-dev-auth-block">
@@ -2841,10 +2855,9 @@ window.sekaiEditable = {
       "audio": [{"key":"tape-jam","url":"Pibby-Glitch","trigger_selector":"#btn-continue"},{"key":"background-music","url":"user-music-1-bgm2-mp3","trigger_selector":"#tab-play"}]
     }
     </script>
-      // ==========================================
-      // СИСТЕМА ПЕРЕВОДА (RU/EN) v2
-      // ==========================================
-      const translationsMap = {
+        <script>
+      // СИСТЕМА ПЕРЕВОДА (RU/EN)
+      window.translationsMap = {
         'ПРОДОЛЖИТЬ': 'CONTINUE', 'НОВАЯ ИГРА': 'NEW GAME', 'НАСТРОЙКИ': 'SETTINGS', 'ВЫЙТИ': 'EXIT',
         'ОШИБКА: СОХРАНЕНИЕ ПОВРЕЖДЕНО': 'ERROR: SAVE CORRUPTED', '[ ЗВУК: АКТИВЕН ]': '[ SOUND: ACTIVE ]',
         'СЧЁТ:': 'SCORE:', '[ В МЕНЮ ]': '[ MENU ]', '«КЛИКАЙ ПОКА МОЖЕШЬ...»': '«CLICK WHILE YOU CAN...»',
@@ -2873,12 +2886,12 @@ window.sekaiEditable = {
       };
 
       const reverseMap = {};
-      for (const [ru, en] of Object.entries(translationsMap)) reverseMap[en] = ru;
+      for (const [ru, en] of Object.entries(window.translationsMap)) reverseMap[en] = ru;
 
-      function translatePage(targetLang) {
+      window.changeLang = function(lang) {
+        const dict = lang === 'en' ? window.translationsMap : reverseMap;
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
         let node;
-        const dict = targetLang === 'en' ? translationsMap : reverseMap;
         while (node = walker.nextNode()) {
           const text = node.nodeValue.trim();
           if (dict[text]) node.nodeValue = node.nodeValue.replace(text, dict[text]);
@@ -2886,10 +2899,7 @@ window.sekaiEditable = {
         document.querySelectorAll('input').forEach(input => {
           if (input.placeholder && dict[input.placeholder]) input.placeholder = dict[input.placeholder];
         });
-      }
-
-      window.changeLang = function(lang) {
-        translatePage(lang);
+        
         document.querySelectorAll('.lang-btn').forEach(btn => {
           btn.style.borderColor = 'var(--sekai-bone-dim)';
           btn.style.color = 'var(--sekai-bone-white)';
@@ -2897,38 +2907,7 @@ window.sekaiEditable = {
         const activeBtn = document.querySelector(`.lang-btn[onclick*="${lang}"]`);
         if (activeBtn) { activeBtn.style.borderColor = 'var(--sekai-blood-red)'; activeBtn.style.color = 'var(--sekai-blood-red)'; }
       };
-
-      // ЖДЕМ, ПОКА ЭЛЕМЕНТЫ ПОЯВЯТСЯ (Игра грузится через iframe Секаи)
-      function injectLanguageButtons() {
-        const langHtml = `
-          <div style="margin-top: 20px; padding: 10px; border-top: 1px dashed var(--sekai-bone-dim); text-align: center;">
-            <div style="font-size: 18px; margin-bottom: 10px; color: var(--sekai-bone-white);">LANGUAGE / ЯЗЫК</div>
-            <div style="display: flex; justify-content: center; gap: 10px;">
-              <button onclick="changeLang('ru')" class="dialog-btn lang-btn" style="min-height: 40px; padding: 5px 20px;">[ РУССКИЙ ]</button>
-              <button onclick="changeLang('en')" class="dialog-btn lang-btn" style="min-height: 40px; padding: 5px 20px;">[ ENGLISH ]</button>
-            </div>
-          </div>`;
-        
-        // Ищем контейнеры настроек
-        const gameSettings = document.querySelector('#pane-settings .mail-box');
-        if (gameSettings && !gameSettings.querySelector('.lang-btn')) {
-          gameSettings.insertAdjacentHTML('beforeend', langHtml);
-        }
-        const menuSettings = document.querySelector('.settings-box');
-        if (menuSettings && !menuSettings.querySelector('.lang-btn')) {
-          menuSettings.insertAdjacentHTML('beforeend', langHtml);
-        }
-      }
-
-      // Следим за изменениями в DOM (когда игра загрузит настройки)
-      const observer = new MutationObserver(() => {
-        injectLanguageButtons();
-      });
-
-      window.addEventListener('load', () => {
-        injectLanguageButtons();
-        observer.observe(document.body, { childList: true, subtree: true });
-      });
     </script>
-  
-</body></html>
+    
+  </body>
+</html>
