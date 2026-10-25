@@ -2072,9 +2072,10 @@ window.sekaiEditable = {
             const btn=document.createElement('button');btn.className='upgrade-btn';btn.textContent=level>=50?'MAX':`${cost} к`;btn.disabled=!unlocked||level>=50||state.clickCount<cost;
             btn.onclick=()=>{if(!unlocked||level>=50||state.clickCount<cost)return;state.clickCount-=cost;state.variantLevels[key][index]++;updateHud();renderVariants();saveProgress();};
             card.append(info,btn);list.appendChild(card);
-                    translateDynamicElements();
           });
         });
+        
+        translateDynamicElements(); // ВЫЗОВ ПОСЛЕ ВСЕХ ЦИКЛОВ
       }
       function startCreatorDialogue() {
         const line=document.getElementById('creator-top-caption'); if(!line)return;
@@ -2189,6 +2190,7 @@ window.sekaiEditable = {
           statusEl.textContent = isClaimedToday
             ? `Бонус уже получен. Следующий через ${Math.ceil(remaining/3600000)} ч.`
             : `Серия ${Math.min((state.dailyStreak||0)+1,7)}/7. Награда: ${(Math.min((state.dailyStreak||0)+1,7))*1000} котостей.`;
+          translateDynamicElements();
         }
       }
 
@@ -2327,6 +2329,7 @@ window.sekaiEditable = {
         if (tabId === 'achievements') renderAchievements();
         if (tabId === 'mail') updateMailStatus();
         if (tabId === 'settings') updateSourceCodeFields();
+        translateDynamicElements();
         playTapeJamGlitch();
         vibrate(30);
       }
@@ -2887,6 +2890,18 @@ window.sekaiEditable = {
         'Ну и для чего ты это сделал?...': 'So why did you do that?...',
         'You can\'t control me. Ты не можешь уйти': 'You can\'t control me. You cannot leave',
         'Эта игра все еще находится в бета версии, ожидайте баги или недоработки. 1 Часть была перенесена только на половину.': 'This game is still in beta, expect bugs or unfinished features. Part 1 was only half transferred.'
+                'Бонус уже получен. Следующий через': 'Bonus already claimed. Next in',
+        'ч.': 'h.',
+        'Серия': 'Streak',
+        'Награда:': 'Reward:',
+        'котостей.': 'kotosts.',
+        'БОНУС ПРИНЯТ: +': 'BONUS ACCEPTED: +',
+        'котостей от The Creator': 'kotosts from The Creator',
+        'Счёт изменён на': 'Score changed to',
+        'Автоклик установлен на уровень': 'Autoclick set to level',
+        'Все скины/персонажи выданы!': 'All skins/characters unlocked!',
+        'Все ачивки выданы!': 'All achievements unlocked!',
+        'НЕВЕРНЫЙ ПИН-КОД': 'INVALID PIN-CODE',
       };
 
       const reverseMap = {};
