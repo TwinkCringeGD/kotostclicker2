@@ -2840,6 +2840,94 @@ window.sekaiEditable = {
       },
       "audio": [{"key":"tape-jam","url":"Pibby-Glitch","trigger_selector":"#btn-continue"},{"key":"background-music","url":"user-music-1-bgm2-mp3","trigger_selector":"#tab-play"}]
     }
+        <script>
+      // ==========================================
+      // СИСТЕМА ПЕРЕВОДА (RU/EN) - ДОБАВЛЕНО СВЕРХУ
+      // ==========================================
+      const translationsMap = {
+        // Меню
+        'ПРОДОЛЖИТЬ': 'CONTINUE', 'НОВАЯ ИГРА': 'NEW GAME', 'НАСТРОЙКИ': 'SETTINGS', 'ВЫЙТИ': 'EXIT',
+        'ОШИБКА: СОХРАНЕНИЕ ПОВРЕЖДЕНО': 'ERROR: SAVE CORRUPTED', '[ ЗВУК: АКТИВЕН ]': '[ SOUND: ACTIVE ]',
+        'СЧЁТ:': 'SCORE:', '[ В МЕНЮ ]': '[ MENU ]', '«КЛИКАЙ ПОКА МОЖЕШЬ...»': '«CLICK WHILE YOU CAN...»',
+        'МНОЖИТЕЛЬ:': 'MULTIPLIER:', 'АВТОКЛИК:': 'AUTOCLICK:',
+        
+        // Вкладки
+        '[ ИГРА ]': '[ PLAY ]', '[ МАГАЗИН ]': '[ SHOP ]', '[ СКИНЫ ]': '[ SKINS ]', '[ АЧИВКИ ]': '[ ACHIEVEMENTS ]', '[ ПОЧТА ]': '[ MAIL ]', '[ НАСТРОЙКИ ]': '[ SETTINGS ]',
+        
+        // Магазин
+        'УЛУЧШЕНИЯ': 'UPGRADES', 'ВАРИАНТЫ': 'VARIANTS', 'Автоклик': 'Autoclick', '+1/сек за уровень': '+1/sec per level',
+        'Сила клика': 'Click Power', '+1 к клику за уровень': '+1 to click per level', 'Критический клик': 'Critical Click',
+        'Шанс x10 к клику (до 50%)': 'Chance x10 to click (up to 50%)', 'Золотой кот': 'Golden Cat', 'Шанс бонусного кота при клике': 'Chance of bonus cat on click',
+        
+        // Скины
+        'СКИНЫ': 'SKINS', 'Обычный': 'Normal', 'БЕСПЛАТНО': 'FREE', 'Толстый': 'Fat', 'Серый': 'Gray', 'Серебряный': 'Silver',
+        'Золотой': 'Golden', 'Лазурный': 'Azure', 'Изумрудный': 'Emerald', 'Рубиновый': 'Ruby', 'Космический': 'Cosmic',
+        'Самурай': 'Samurai', 'Магический': 'Magic', '[ ВЫБРАТЬ ]': '[ SELECT ]', 'СКОРО В ИГРЕ': 'COMING SOON',
+        
+        // Ачивки
+        'СИСТЕМНЫЕ ЛОГИ': 'SYSTEM LOGS', 'Первый клик': 'First Click', 'Одержимость': 'Obsession', 'Автоматизация': 'Automation',
+        'Новая оболочка': 'New Shell', 'Взлом реальности': 'Reality Hack', 'Максимум систем': 'Max Systems',
+        '[SYSTEM] Запись зашифрована:': '[SYSTEM] Record encrypted:', '[ЗАБЛОКИРОВАНО]': '[LOCKED]', '[РАЗБЛОКИРОВАНО]': '[UNLOCKED]',
+        
+        // Почта
+        'ПОЧТА': 'MAIL', '[ THE CREATOR ]': '[ THE CREATOR ]', '[ ЗАБРАТЬ БОНУС ДНЯ ]': '[ CLAIM DAILY BONUS ]', '[ БОНУС ПОЛУЧЕН ]': '[ BONUS CLAIMED ]',
+        '«Твои пальцы устали? Ты тратишь время впустую, но я наблюдаю за каждым кликом. Прими этот подарок, если осмелишься...»': '«Are your fingers tired? You are wasting time, but I watch every click. Accept this gift, if you dare...»',
+        
+        // Настройки
+        'Версия игры:': 'Game version:', 'ИСХОДНЫЙ КОД ИГРЫ (HTML5):': 'GAME SOURCE CODE (HTML5):', '[ СКОПИРОВАТЬ КОД ]': '[ COPY CODE ]', '[ СБРОСИТЬ ПРОГРЕСС ]': '[ RESET PROGRESS ]',
+        'РЕЖИМ РАЗРАБОТЧИКА': 'DEVELOPER MODE', 'ВВЕДИТЕ ПИН-КОД': 'ENTER PIN-CODE', 'ВОЙТИ В РЕЖИМ РАЗРАБОТЧИКА': 'ENTER DEVELOPER MODE',
+        'Ты уверен? Это сотрёт твою память...': 'Are you sure? This will wipe your memory...', '[ СТЕРЕТЬ ]': '[ WIPE ]', '[ НАЗАД ]': '[ BACK ]', '[ ВЕРНУТЬСЯ ]': '[ RETURN ]', '[ ПОНЯТНО ]': '[ GOT IT ]',
+        'ПРЕДУПРЕЖДЕНИЕ': 'WARNING',
+        
+        // The Creator
+        'Вижу, ты здесь уже не новый. Проведу тебе небольшое обучение так как... это место новое. Кликай по котику': 'I see you are not new here. I will give you a brief tutorial since... this place is new. Click on the cat',
+        'Ты ушел? Я скучал...': 'You left? I missed you...', 'Продолжай. Я всё ещё смотрю.': 'Keep going. I am still watching.',
+        'Ну и для чего ты это сделал?...': 'So why did you do that?...',
+        'You can\'t control me. Ты не можешь уйти': 'You can\'t control me. You cannot leave',
+        'Эта игра все еще находится в бета версии, ожидайте баги или недоработки. 1 Часть была перенесена только на половину.': 'This game is still in beta, expect bugs or unfinished features. Part 1 was only half transferred.'
+      };
+
+      const reverseMap = {};
+      for (const [ru, en] of Object.entries(translationsMap)) reverseMap[en] = ru;
+
+      function translatePage(targetLang) {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
+        let node;
+        const dict = targetLang === 'en' ? translationsMap : reverseMap;
+        while (node = walker.nextNode()) {
+          const text = node.nodeValue.trim();
+          if (dict[text]) node.nodeValue = node.nodeValue.replace(text, dict[text]);
+        }
+        document.querySelectorAll('input').forEach(input => {
+          if (input.placeholder && dict[input.placeholder]) input.placeholder = dict[input.placeholder];
+        });
+      }
+
+      window.changeLang = function(lang) {
+        translatePage(lang);
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+          btn.style.borderColor = 'var(--sekai-bone-dim)';
+          btn.style.color = 'var(--sekai-bone-white)';
+        });
+        const activeBtn = document.querySelector(`.lang-btn[onclick*="${lang}"]`);
+        if (activeBtn) { activeBtn.style.borderColor = 'var(--sekai-blood-red)'; activeBtn.style.color = 'var(--sekai-blood-red)'; }
+      };
+
+      // Добавляем кнопки языка при загрузке
+      window.addEventListener('load', () => {
+        const langHtml = `
+          <div style="margin-top: 20px; padding: 10px; border-top: 1px dashed var(--sekai-bone-dim); text-align: center;">
+            <div style="font-size: 18px; margin-bottom: 10px; color: var(--sekai-bone-white);">LANGUAGE / ЯЗЫК</div>
+            <div style="display: flex; justify-content: center; gap: 10px;">
+              <button onclick="changeLang('ru')" class="dialog-btn lang-btn" style="min-height: 40px; padding: 5px 20px;">[ РУССКИЙ ]</button>
+              <button onclick="changeLang('en')" class="dialog-btn lang-btn" style="min-height: 40px; padding: 5px 20px;">[ ENGLISH ]</button>
+            </div>
+          </div>`;
+        const gameSettings = document.querySelector('#pane-settings .mail-box');
+        if (gameSettings && !gameSettings.querySelector('.lang-btn')) gameSettings.insertAdjacentHTML('beforeend', langHtml);
+        const menuSettings = document.querySelector('.settings-box');
+        if (menuSettings && !menuSettings.querySelector('.lang-btn')) menuSettings.insertAdjacentHTML('beforeend', langHtml);
+      });
     </script>
   
 </body></html>
