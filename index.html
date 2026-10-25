@@ -2964,16 +2964,6 @@ window.sekaiEditable = {
           window.location.reload();
         }
       };
-
-      // И при каждом обновлении интерфейса (через MutationObserver)
-      const observer = new MutationObserver(() => {
-        // Если язык английский — переводим новые элементы
-        const activeBtn = document.querySelector('.lang-btn[onclick*="en"]');
-        if (activeBtn && activeBtn.style.borderColor === 'var(--sekai-blood-red)') {
-          translateDynamicElements();
-        }
-      });
-      observer.observe(document.body, { childList: true, subtree: true });
     </script>
     
   </body>
