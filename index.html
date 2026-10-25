@@ -2840,46 +2840,31 @@ window.sekaiEditable = {
       },
       "audio": [{"key":"tape-jam","url":"Pibby-Glitch","trigger_selector":"#btn-continue"},{"key":"background-music","url":"user-music-1-bgm2-mp3","trigger_selector":"#tab-play"}]
     }
-        <script>
+    </script>
       // ==========================================
-      // СИСТЕМА ПЕРЕВОДА (RU/EN) - ДОБАВЛЕНО СВЕРХУ
+      // СИСТЕМА ПЕРЕВОДА (RU/EN) v2
       // ==========================================
       const translationsMap = {
-        // Меню
         'ПРОДОЛЖИТЬ': 'CONTINUE', 'НОВАЯ ИГРА': 'NEW GAME', 'НАСТРОЙКИ': 'SETTINGS', 'ВЫЙТИ': 'EXIT',
         'ОШИБКА: СОХРАНЕНИЕ ПОВРЕЖДЕНО': 'ERROR: SAVE CORRUPTED', '[ ЗВУК: АКТИВЕН ]': '[ SOUND: ACTIVE ]',
         'СЧЁТ:': 'SCORE:', '[ В МЕНЮ ]': '[ MENU ]', '«КЛИКАЙ ПОКА МОЖЕШЬ...»': '«CLICK WHILE YOU CAN...»',
         'МНОЖИТЕЛЬ:': 'MULTIPLIER:', 'АВТОКЛИК:': 'AUTOCLICK:',
-        
-        // Вкладки
         '[ ИГРА ]': '[ PLAY ]', '[ МАГАЗИН ]': '[ SHOP ]', '[ СКИНЫ ]': '[ SKINS ]', '[ АЧИВКИ ]': '[ ACHIEVEMENTS ]', '[ ПОЧТА ]': '[ MAIL ]', '[ НАСТРОЙКИ ]': '[ SETTINGS ]',
-        
-        // Магазин
         'УЛУЧШЕНИЯ': 'UPGRADES', 'ВАРИАНТЫ': 'VARIANTS', 'Автоклик': 'Autoclick', '+1/сек за уровень': '+1/sec per level',
         'Сила клика': 'Click Power', '+1 к клику за уровень': '+1 to click per level', 'Критический клик': 'Critical Click',
         'Шанс x10 к клику (до 50%)': 'Chance x10 to click (up to 50%)', 'Золотой кот': 'Golden Cat', 'Шанс бонусного кота при клике': 'Chance of bonus cat on click',
-        
-        // Скины
         'СКИНЫ': 'SKINS', 'Обычный': 'Normal', 'БЕСПЛАТНО': 'FREE', 'Толстый': 'Fat', 'Серый': 'Gray', 'Серебряный': 'Silver',
         'Золотой': 'Golden', 'Лазурный': 'Azure', 'Изумрудный': 'Emerald', 'Рубиновый': 'Ruby', 'Космический': 'Cosmic',
         'Самурай': 'Samurai', 'Магический': 'Magic', '[ ВЫБРАТЬ ]': '[ SELECT ]', 'СКОРО В ИГРЕ': 'COMING SOON',
-        
-        // Ачивки
         'СИСТЕМНЫЕ ЛОГИ': 'SYSTEM LOGS', 'Первый клик': 'First Click', 'Одержимость': 'Obsession', 'Автоматизация': 'Automation',
         'Новая оболочка': 'New Shell', 'Взлом реальности': 'Reality Hack', 'Максимум систем': 'Max Systems',
         '[SYSTEM] Запись зашифрована:': '[SYSTEM] Record encrypted:', '[ЗАБЛОКИРОВАНО]': '[LOCKED]', '[РАЗБЛОКИРОВАНО]': '[UNLOCKED]',
-        
-        // Почта
         'ПОЧТА': 'MAIL', '[ THE CREATOR ]': '[ THE CREATOR ]', '[ ЗАБРАТЬ БОНУС ДНЯ ]': '[ CLAIM DAILY BONUS ]', '[ БОНУС ПОЛУЧЕН ]': '[ BONUS CLAIMED ]',
         '«Твои пальцы устали? Ты тратишь время впустую, но я наблюдаю за каждым кликом. Прими этот подарок, если осмелишься...»': '«Are your fingers tired? You are wasting time, but I watch every click. Accept this gift, if you dare...»',
-        
-        // Настройки
         'Версия игры:': 'Game version:', 'ИСХОДНЫЙ КОД ИГРЫ (HTML5):': 'GAME SOURCE CODE (HTML5):', '[ СКОПИРОВАТЬ КОД ]': '[ COPY CODE ]', '[ СБРОСИТЬ ПРОГРЕСС ]': '[ RESET PROGRESS ]',
         'РЕЖИМ РАЗРАБОТЧИКА': 'DEVELOPER MODE', 'ВВЕДИТЕ ПИН-КОД': 'ENTER PIN-CODE', 'ВОЙТИ В РЕЖИМ РАЗРАБОТЧИКА': 'ENTER DEVELOPER MODE',
         'Ты уверен? Это сотрёт твою память...': 'Are you sure? This will wipe your memory...', '[ СТЕРЕТЬ ]': '[ WIPE ]', '[ НАЗАД ]': '[ BACK ]', '[ ВЕРНУТЬСЯ ]': '[ RETURN ]', '[ ПОНЯТНО ]': '[ GOT IT ]',
         'ПРЕДУПРЕЖДЕНИЕ': 'WARNING',
-        
-        // The Creator
         'Вижу, ты здесь уже не новый. Проведу тебе небольшое обучение так как... это место новое. Кликай по котику': 'I see you are not new here. I will give you a brief tutorial since... this place is new. Click on the cat',
         'Ты ушел? Я скучал...': 'You left? I missed you...', 'Продолжай. Я всё ещё смотрю.': 'Keep going. I am still watching.',
         'Ну и для чего ты это сделал?...': 'So why did you do that?...',
@@ -2913,8 +2898,8 @@ window.sekaiEditable = {
         if (activeBtn) { activeBtn.style.borderColor = 'var(--sekai-blood-red)'; activeBtn.style.color = 'var(--sekai-blood-red)'; }
       };
 
-      // Добавляем кнопки языка при загрузке
-      window.addEventListener('load', () => {
+      // ЖДЕМ, ПОКА ЭЛЕМЕНТЫ ПОЯВЯТСЯ (Игра грузится через iframe Секаи)
+      function injectLanguageButtons() {
         const langHtml = `
           <div style="margin-top: 20px; padding: 10px; border-top: 1px dashed var(--sekai-bone-dim); text-align: center;">
             <div style="font-size: 18px; margin-bottom: 10px; color: var(--sekai-bone-white);">LANGUAGE / ЯЗЫК</div>
@@ -2923,10 +2908,26 @@ window.sekaiEditable = {
               <button onclick="changeLang('en')" class="dialog-btn lang-btn" style="min-height: 40px; padding: 5px 20px;">[ ENGLISH ]</button>
             </div>
           </div>`;
+        
+        // Ищем контейнеры настроек
         const gameSettings = document.querySelector('#pane-settings .mail-box');
-        if (gameSettings && !gameSettings.querySelector('.lang-btn')) gameSettings.insertAdjacentHTML('beforeend', langHtml);
+        if (gameSettings && !gameSettings.querySelector('.lang-btn')) {
+          gameSettings.insertAdjacentHTML('beforeend', langHtml);
+        }
         const menuSettings = document.querySelector('.settings-box');
-        if (menuSettings && !menuSettings.querySelector('.lang-btn')) menuSettings.insertAdjacentHTML('beforeend', langHtml);
+        if (menuSettings && !menuSettings.querySelector('.lang-btn')) {
+          menuSettings.insertAdjacentHTML('beforeend', langHtml);
+        }
+      }
+
+      // Следим за изменениями в DOM (когда игра загрузит настройки)
+      const observer = new MutationObserver(() => {
+        injectLanguageButtons();
+      });
+
+      window.addEventListener('load', () => {
+        injectLanguageButtons();
+        observer.observe(document.body, { childList: true, subtree: true });
       });
     </script>
   
