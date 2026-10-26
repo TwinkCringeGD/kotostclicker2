@@ -1596,6 +1596,11 @@ window.sekaiEditable = {
       let creatorDismissed = false;
       let isPostReset = false;
      const creatorLines = ['Вижу, ты здесь уже не новый. Проведу тебе небольшое обучение так как... это место новое. Кликай по котику', 'Ты ушел? Я скучал...', 'Продолжай. Я всё ещё смотрю.'];
+            const creatorLines_en = [
+        'I see you are not new here. I will give you a brief tutorial since... this place is new. Click on the cat',
+        'You left? I missed you...',
+        'Keep going. I am still watching.'
+      ];
       let lastPlayerClick = Date.now();
       let creatorTypingTimer = null;
       let CURRENT_GAME_VERSION = '1.0B';
@@ -2062,32 +2067,49 @@ window.sekaiEditable = {
       ];
       function renderVariants() {
         const list=document.getElementById('variant-list'); if(!list)return; list.innerHTML='';
-        [['СИЛА КЛИКА',clickVariants,'click'],['АВТОКЛИК',autoVariants,'auto']].forEach(([heading,defs,key])=>{
-          const title=document.createElement('h3'); title.className='tab-title'; title.textContent=heading; list.appendChild(title);
-          defs.forEach((def,index)=>{
-            const level=state.variantLevels[key][index], unlocked=index===0||state.variantLevels[key][index-1]>=50;
-            const cost=Math.floor((100+(index*80))*Math.pow(1.35,level));
-            const card=document.createElement('div'); card.className='upgrade-card'+(unlocked?'':' locked');
-            const info=document.createElement('div'); info.className='upgrade-info';
-            const name=document.createElement('div'); name.className='upgrade-name'; name.textContent=`${def.name} [${level}/50]`;
-            const desc=document.createElement('div'); desc.className='upgrade-desc'; desc.textContent=key==='click'?`+${def.gain} к клику за уровень`:`+${def.gain} в секунду за уровень`;
-            info.append(name,desc);
-            if(!unlocked){const req=document.createElement('div');req.className='upgrade-desc';req.textContent='ТРЕБУЕТСЯ: Прокачать предыдущий вариант до 50 уровня';info.appendChild(req);}
-            const btn=document.createElement('button');btn.className='upgrade-btn';btn.textContent=level>=50?'MAX':`${cost} к`;btn.disabled=!unlocked||level>=50||state.clickCount<cost;
-            btn.onclick=()=>{if(!unlocked||level>=50||state.clickCount<cost)return;state.clickCount-=cost;state.variantLevels[key][index]++;updateHud();renderVariants();saveProgress();};
-            card.append(info,btn);list.appendChild(card);
-          });
-        });
+            function updateHud() {
+        const isEnglish = document.querySelector('.lang-btn[onclick*="en"]')?.style.borderColor === 'var(--sekai-blood-red)';
+        const counterEl = document.getElementById('click-counter');
+        if (counterEl) counterEl.textContent = String(state.clickCount);
+        const multEl = document.getElementById('click-multiplier');
+        if (multEl) multEl.textContent = isEnglish ? `MULTIPLIER: x${state.multiplier}` : `МНОЖИТЕЛЬ: x${state.multiplier}`;
+        const cpsEl = document.getElementById('cps-display');
+        const autoBonus=state.variantLevels?.auto?.reduce((sum,lvl,index)=>sum+lvl*autoVariants[index].gain,0)||0;
+        const clickBonus=state.variantLevels?.click?.reduce((sum,lvl,index)=>sum+lvl*clickVariants[index].gain,0)||0;
+        if (cpsEl) cpsEl.textContent = isEnglish ? `AUTOCLICK: ${Number((state.upgrades?.autoclick || 0)+autoBonus)}/sec` : `АВТОКЛИК: ${Number((state.upgrades?.autoclick || 0)+autoBonus)}/сек`;
+        state.clickBonus=clickBonus;
+      }
         translateDynamicElements(); // ВЫЗОВ ПОСЛЕ ВСЕХ ЦИКЛОВ
       }
-      function startCreatorDialogue() {
-        const line=document.getElementById('creator-top-caption'); if(!line)return;
-        const first=!state.creatorSeen; state.creatorSeen=true;
-        const postResetText = 'Ну и для чего ты это сделал?...';
-        const text=isPostReset ? postResetText : (first?creatorLines[0]:creatorLines[1]);let i=0;line.textContent='';clearInterval(creatorTypingTimer);
+           function startCreatorDialogue() {
+        const line = document.getElementById('creator-top-caption');
+        if (!line) return;
+        
+        const first = !state.creatorSeen;
+        state.creatorSeen = true;
+        
+        const isEnglish = document.querySelector('.lang-btn[onclick*="en"]')?.style.borderColor === 'var(--sekai-blood-red)';
+        
+        let text;
+        if (isPostReset) {
+          text = isEnglish ? 'So why did you do that?...' : 'Ну и для чего ты это сделал?...';
+        } else {
+          text = isEnglish ? (first ? creatorLines_en[0] : creatorLines_en[1]) : (first ? creatorLines[0] : creatorLines[1]);
+        }
+        
         creatorMessageCount++;
-        creatorTypingTimer=setInterval(()=>{line.textContent=text.slice(0,++i);if(i>=text.length)clearInterval(creatorTypingTimer);},34);
-        lastPlayerClick=Date.now();saveProgress();
+        line.textContent = '';
+        clearInterval(creatorTypingTimer);
+        
+        let i = 0; // <--- ВОТ ЭТУ СТРОКУ ТЫ ПОТЕРЯЛ!
+        
+        creatorTypingTimer = setInterval(() => {
+          line.textContent = text.slice(0, ++i);
+          if (i >= text.length) clearInterval(creatorTypingTimer);
+        }, 34);
+        
+        lastPlayerClick = Date.now();
+        saveProgress();
       }
 
       function getUpgradeCost(upId, currentLvl) {
@@ -2264,15 +2286,16 @@ window.sekaiEditable = {
         });
         translateDynamicElements(); // ВЫЗОВ ПОСЛЕ ЦИКЛА
       }
-      function updateHud() {
+       function updateHud() {
+        const isEnglish = document.querySelector('.lang-btn[onclick*="en"]')?.style.borderColor === 'var(--sekai-blood-red)';
         const counterEl = document.getElementById('click-counter');
         if (counterEl) counterEl.textContent = String(state.clickCount);
         const multEl = document.getElementById('click-multiplier');
-        if (multEl) multEl.textContent = `МНОЖИТЕЛЬ: x${state.multiplier}`;
+        if (multEl) multEl.textContent = isEnglish ? `MULTIPLIER: x${state.multiplier}` : `МНОЖИТЕЛЬ: x${state.multiplier}`;
         const cpsEl = document.getElementById('cps-display');
         const autoBonus=state.variantLevels?.auto?.reduce((sum,lvl,index)=>sum+lvl*autoVariants[index].gain,0)||0;
         const clickBonus=state.variantLevels?.click?.reduce((sum,lvl,index)=>sum+lvl*clickVariants[index].gain,0)||0;
-        if (cpsEl) cpsEl.textContent = `АВТОКЛИК: ${Number((state.upgrades?.autoclick || 0)+autoBonus)}/сек`;
+        if (cpsEl) cpsEl.textContent = isEnglish ? `AUTOCLICK: ${Number((state.upgrades?.autoclick || 0)+autoBonus)}/sec` : `АВТОКЛИК: ${Number((state.upgrades?.autoclick || 0)+autoBonus)}/сек`;
         state.clickBonus=clickBonus;
       }
       function saveProgress() {
