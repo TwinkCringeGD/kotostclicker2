@@ -2054,8 +2054,12 @@ window.sekaiEditable = {
         }
       ];
 
-      const clickVariants = [{name:'Лёгкий удар',gain:10},{name:'Тяжёлый удар',gain:50},{name:'Мощный удар',gain:100},{name:'Критический удар',gain:500},{name:'Разрушительный удар',gain:1000}];
-      const autoVariants = [{name:'Маленькая лапка',gain:10},{name:'Пушистый хвост',gain:50},{name:'Когтистая лапа',gain:100},{name:'Кот-робот',gain:500},{name:'Космический разум',gain:1000}];
+        const clickVariants = [
+        {name:'Light Strike',gain:10},{name:'Heavy Strike',gain:50},{name:'Powerful Strike',gain:100},{name:'Critical Strike',gain:500},{name:'Destructive Strike',gain:1000}
+      ];
+      const autoVariants = [
+        {name:'Little Paw',gain:10},{name:'Fluffy Tail',gain:50},{name:'Clawed Paw',gain:100},{name:'Robot Cat',gain:500},{name:'Cosmic Mind',gain:1000}
+      ];
       function renderVariants() {
         const list=document.getElementById('variant-list'); if(!list)return; list.innerHTML='';
         [['СИЛА КЛИКА',clickVariants,'click'],['АВТОКЛИК',autoVariants,'auto']].forEach(([heading,defs,key])=>{
@@ -2173,25 +2177,39 @@ window.sekaiEditable = {
         });
         translateDynamicElements(); // <--- ВЫЗОВ ПОСЛЕ ЦИКЛА
       }
-      function updateMailStatus() {
+        function updateMailStatus() {
         const bonusBtn = document.getElementById('btn-daily-bonus');
         const statusEl = document.getElementById('bonus-status');
         const now=Date.now();
         const remaining=Math.max(0,86400000-(now-(state.lastDailyBonusAt||0)));
         const isClaimedToday = remaining > 0;
+        
+        // Проверяем, включен ли английский
+        const isEnglish = document.querySelector('.lang-btn[onclick*="en"]')?.style.borderColor === 'var(--sekai-blood-red)';
 
         if (bonusBtn) {
           bonusBtn.disabled = isClaimedToday;
-          bonusBtn.textContent = isClaimedToday ? '[ БОНУС ПОЛУЧЕН ]' : '[ ЗАБРАТЬ БОНУС ДНЯ ]';
+          if (isEnglish) {
+            bonusBtn.textContent = isClaimedToday ? '[ BONUS CLAIMED ]' : '[ CLAIM DAILY BONUS ]';
+          } else {
+            bonusBtn.textContent = isClaimedToday ? '[ БОНУС ПОЛУЧЕН ]' : '[ ЗАБРАТЬ БОНУС ДНЯ ]';
+          }
         }
         if (statusEl) {
-          statusEl.textContent = isClaimedToday
-            ? `Бонус уже получен. Следующий через ${Math.ceil(remaining/3600000)} ч.`
-            : `Серия ${Math.min((state.dailyStreak||0)+1,7)}/7. Награда: ${(Math.min((state.dailyStreak||0)+1,7))*1000} котостей.`;
-          translateDynamicElements();
+          const streak = Math.min((state.dailyStreak||0)+1,7);
+          const reward = streak*1000;
+          if (isClaimedToday) {
+            const hours = Math.ceil(remaining/3600000);
+            statusEl.textContent = isEnglish 
+              ? `Bonus already claimed. Next in ${hours} h.` 
+              : `Бонус уже получен. Следующий через ${hours} ч.`;
+          } else {
+            statusEl.textContent = isEnglish 
+              ? `Streak ${streak}/7. Reward: ${reward} kotosts.` 
+              : `Серия ${streak}/7. Награда: ${reward} котостей.`;
+          }
         }
       }
-
       function handleClaimDailyBonus() {
         const now=Date.now();
         if(state.lastDailyBonusAt&&now-state.lastDailyBonusAt<86400000)return;
@@ -2366,27 +2384,40 @@ window.sekaiEditable = {
         renderPhase();
       }
 
-      function updateSourceCodeFields() {
+  
+        function updateSourceCodeFields() {
         const fullHtml = document.documentElement.outerHTML;
         const area1 = document.getElementById('game-source-code');
         if (area1) area1.value = fullHtml;
         const area2 = document.getElementById('menu-source-code');
         if (area2) area2.value = fullHtml;
+        
+        const isEnglish = document.querySelector('.lang-btn[onclick*="en"]')?.style.borderColor === 'var(--sekai-blood-red)';
+        const v1 = document.getElementById('game-version-text');
+        const v2 = document.getElementById('menu-version-text');
+        if (v1 && v1.textContent.includes('Версия')) v1.textContent = v1.textContent.replace('Версия игры:', isEnglish ? 'Game version:' : 'Версия игры:');
+        if (v2 && v2.textContent.includes('Версия')) v2.textContent = v2.textContent.replace('Версия игры:', isEnglish ? 'Game version:' : 'Версия игры:');
+        
+        const copyStatus = document.getElementById('copy-status-msg');
+        if (copyStatus && copyStatus.textContent.includes('КОД')) {
+          copyStatus.textContent = copyStatus.textContent.replace('КОД СКОПИРОВАН В БУФЕР', isEnglish ? 'CODE COPIED TO CLIPBOARD' : 'КОД СКОПИРОВАН В БУФЕР');
+        }
       }
 
-      function copySourceCode(statusElId) {
+         function copySourceCode(statusElId) {
         updateSourceCodeFields();
         const fullHtml = document.documentElement.outerHTML;
         const statusEl = document.getElementById(statusElId);
+        const isEnglish = document.querySelector('.lang-btn[onclick*="en"]')?.style.borderColor === 'var(--sekai-blood-red)';
+        
         navigator.clipboard?.writeText(fullHtml).then(() => {
-          if (statusEl) statusEl.textContent = '[ КОД СКОПИРОВАН В БУФЕР ]';
+          if (statusEl) statusEl.textContent = isEnglish ? '[ CODE COPIED TO CLIPBOARD ]' : '[ КОД СКОПИРОВАН В БУФЕР ]';
         }).catch(() => {
-          if (statusEl) statusEl.textContent = '[ ВЫДЕЛИТЕ И СКОПИРУЙТЕ ТЕКСТ ВРУЧНУЮ ]';
+          if (statusEl) statusEl.textContent = isEnglish ? '[ SELECT AND COPY TEXT MANUALLY ]' : '[ ВЫДЕЛИТЕ И СКОПИРУЙТЕ ТЕКСТ ВРУЧНУЮ ]';
         });
         setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
       }
-
-      const DEV_SECRET_PIN = 'GIVEACCESSUSERIDADM_IDENTIFY_PERSON_GRANTADM';
+      const DEV_SECRET_PIN = 'HAVEFUN';
       let isDevModeUnlocked = false;
 
       function renderDevPanel(containerId) {
