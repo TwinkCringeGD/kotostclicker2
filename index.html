@@ -2074,7 +2074,6 @@ window.sekaiEditable = {
             card.append(info,btn);list.appendChild(card);
           });
         });
-        
         translateDynamicElements(); // ВЫЗОВ ПОСЛЕ ВСЕХ ЦИКЛОВ
       }
       function startCreatorDialogue() {
@@ -2159,7 +2158,7 @@ window.sekaiEditable = {
         }
       }
 
-       function renderAchievements() {
+      function renderAchievements() {
         const list = document.getElementById('achievements-list');
         if (!list) return;
         list.innerHTML = '';
@@ -2173,8 +2172,7 @@ window.sekaiEditable = {
           list.appendChild(item);
         });
         translateDynamicElements(); // <--- ВЫЗОВ ПОСЛЕ ЦИКЛА
-       }
-
+      }
       function updateMailStatus() {
         const bonusBtn = document.getElementById('btn-daily-bonus');
         const statusEl = document.getElementById('bonus-status');
@@ -2210,7 +2208,7 @@ window.sekaiEditable = {
         saveProgress();
       }
 
-      function renderShop() {
+           function renderShop() {
         const list = document.getElementById('skin-list');
         if (!list) return;
         const defaultBtn = document.getElementById('btn-skin-default');
@@ -2243,12 +2241,11 @@ window.sekaiEditable = {
               checkAchievements();
               saveProgress();
             }
-                    translateDynamicElements();
             renderShop();
           };
         });
+        translateDynamicElements(); // ВЫЗОВ ПОСЛЕ ЦИКЛА
       }
-
       function updateHud() {
         const counterEl = document.getElementById('click-counter');
         if (counterEl) counterEl.textContent = String(state.clickCount);
@@ -2889,7 +2886,7 @@ window.sekaiEditable = {
         'Ты ушел? Я скучал...': 'You left? I missed you...', 'Продолжай. Я всё ещё смотрю.': 'Keep going. I am still watching.',
         'Ну и для чего ты это сделал?...': 'So why did you do that?...',
         'You can\'t control me. Ты не можешь уйти': 'You can\'t control me. You cannot leave',
-        'Эта игра все еще находится в бета версии, ожидайте баги или недоработки. 1 Часть была перенесена только на половину.': 'This game is still in beta, expect bugs or unfinished features. Part 1 was only half transferred.'
+        'Эта игра все еще находится в бета версии, ожидайте баги или недоработки. 1 Часть была перенесена только на половину.': 'This game is still in beta, expect bugs or unfinished features. Part 1 was only half transferred.',
                 'Бонус уже получен. Следующий через': 'Bonus already claimed. Next in',
         'ч.': 'h.',
         'Серия': 'Streak',
@@ -2901,7 +2898,7 @@ window.sekaiEditable = {
         'Автоклик установлен на уровень': 'Autoclick set to level',
         'Все скины/персонажи выданы!': 'All skins/characters unlocked!',
         'Все ачивки выданы!': 'All achievements unlocked!',
-        'НЕВЕРНЫЙ ПИН-КОД': 'INVALID PIN-CODE',
+        'НЕВЕРНЫЙ ПИН-КОД': 'INVALID PIN-CODE'
       };
 
       const reverseMap = {};
