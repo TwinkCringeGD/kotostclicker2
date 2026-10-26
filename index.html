@@ -1595,7 +1595,7 @@ window.sekaiEditable = {
       let creatorMessageCount = 0;
       let creatorDismissed = false;
       let isPostReset = false;
-      const creatorLines = ['Вижу, ты здесь уже не новый. Проведу тебе небольшое обучение так как... это место новое. Кликай по котику', 'Ты ушел? Я скучал...', 'Продолжай. Я всё ещё смотрю.'];
+     const creatorLines = ['Вижу, ты здесь уже не новый. Проведу тебе небольшое обучение так как... это место новое. Кликай по котику', 'Ты ушел? Я скучал...', 'Продолжай. Я всё ещё смотрю.'];
       let lastPlayerClick = Date.now();
       let creatorTypingTimer = null;
       let CURRENT_GAME_VERSION = '1.0B';
@@ -2904,7 +2904,7 @@ window.sekaiEditable = {
       const reverseMap = {};
       for (const [ru, en] of Object.entries(window.translationsMap)) reverseMap[en] = ru;
 
-      window.changeLang = function(lang) {
+         window.changeLang = function(lang) {
         const dict = lang === 'en' ? window.translationsMap : reverseMap;
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, null, false);
         let node;
@@ -2922,6 +2922,14 @@ window.sekaiEditable = {
         });
         const activeBtn = document.querySelector(`.lang-btn[onclick*="${lang}"]`);
         if (activeBtn) { activeBtn.style.borderColor = 'var(--sekai-blood-red)'; activeBtn.style.color = 'var(--sekai-blood-red)'; }
+
+        // ПРИНУДИТЕЛЬНАЯ ПЕРЕРИСОВКА
+        if (typeof renderShop === 'function') renderShop();
+        if (typeof renderUpgrades === 'function') renderUpgrades();
+        if (typeof renderAchievements === 'function') renderAchievements();
+        if (typeof renderVariants === 'function') renderVariants();
+        if (typeof updateMailStatus === 'function') updateMailStatus();
+        if (typeof translateDynamicElements === 'function') translateDynamicElements();
       };
             // ПЕРЕВОД ДИНАМИЧЕСКИХ ЭЛЕМЕНТОВ (Скины, Улучшения, Ачивки)
       function translateDynamicElements() {
