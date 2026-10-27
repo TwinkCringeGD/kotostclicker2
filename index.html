@@ -1208,6 +1208,54 @@ window.sekaiEditable = {
       function renderDevPanel(containerId) {
         const box = document.getElementById(containerId); if (!box) return;
         box.innerHTML = '';
+                // --- НОВАЯ СЕКЦИЯ: КТО СЕЙЧАС ОНЛАЙН ---
+        const onlineSec = document.createElement('div');
+        onlineSec.innerHTML = `
+          <div class="dev-section-title">СИМУЛЯЦИЯ: АКТИВНЫЕ СОЗНАНИЯ</div>
+          <div id="${containerId}-online-list" style="font-size:14px; line-height:1.4; color:var(--sekai-bone-white); background:#000; border:1px solid #333; padding:8px; margin-bottom:10px;">
+            Загрузка данных...
+          </div>
+          <button id="${containerId}-btn-refresh-online" class="dev-btn" style="background:#1a0000; border-color:var(--sekai-blood-red); color:var(--sekai-blood-red);">[ ОБНОВИТЬ СПИСОК ]</button>
+        `;
+        box.appendChild(onlineSec);
+
+        // Логика генерации игроков
+        const generateOnlineList = () => {
+          const listEl = document.getElementById(`${containerId}-online-list`);
+          if (!listEl) return;
+          
+          listEl.innerHTML = '';
+          
+          // Случайное количество игроков от 2 до 5
+          const playerCount = Math.floor(Math.random() * 4) + 2; 
+          
+          const fakeNames = ['User_8472', 'Collector_99', 'KotostLover', 'VHS_Enjoyer', 'Simulation_Breaker', 'TheWatcher'];
+          const fakeStatuses = ['[Кликает]', '[Покупает скин]', '[Читает почту]', '[Застрял на x500]', '[Плачет]'];
+          
+          // Генерируем игроков
+          for(let i=0; i<playerCount; i++) {
+            const name = fakeNames[Math.floor(Math.random() * fakeNames.length)] + '_' + Math.floor(Math.random() * 99);
+            const status = fakeStatuses[Math.floor(Math.random() * fakeStatuses.length)];
+            const div = document.createElement('div');
+            div.style.marginBottom = '4px';
+            div.innerHTML = `🟢 ${name} — <span style="color:#8E8A7D;">${status}</span>`;
+            listEl.appendChild(div);
+          }
+
+          // Иногда добавляем самого The Creator
+          if (Math.random() > 0.5) {
+            const creatorDiv = document.createElement('div');
+            creatorDiv.style.marginTop = '6px';
+            creatorDiv.style.color = 'var(--sekai-blood-red)';
+            creatorDiv.innerHTML = `👁️ <b>THE CREATOR</b> — <i>[Наблюдает за тобой]</i>`;
+            listEl.appendChild(creatorDiv);
+          }
+        };
+
+        // Вызываем генерацию при открытии и при нажатии кнопки
+        generateOnlineList();
+        box.querySelector(`#${containerId}-btn-refresh-online`)?.addEventListener('click', generateOnlineList);
+        // --- КОНЕЦ СЕКЦИИ ---
         const statsSec = document.createElement('div');
         statsSec.innerHTML = `
           <div class="dev-section-title">ИЗМЕНЕНИЕ СТАТИСТИКИ</div>
