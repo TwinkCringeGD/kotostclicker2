@@ -399,8 +399,74 @@ window.sekaiEditable = {
       window.getOnlinePlayers = function(callback) {
         onValue(ref(db, 'online_players'), (snapshot) => {
           callback(snapshot.val());
+
+              // --- СИСТЕМА АККАУНТОВ И СОХРАНЕНИЙ ---
+
+      // Функция для входа
+      window.doLogin = async (user, pass) => {
+        try {
+          const snap = await get(ref(db, 'accounts/' + user));
+          if (snap.exists()) {
+            const data = snap.val();
+            if (data.password === pass) {
+              localStorage.setItem('kotost_user', user);
+              return { success: true, data: data };
+            } else return { success: false, error: "Неверный секретный код" };
+          } else return { success: false, error: "Собиратель не найден" };
+        } catch(e) { 
+          console.error(e);
+          return { success: false, error: "Ошибка сети" }; 
+        }
+      };
+
+      // Функция для регистрации
+      window.doRegister = async (user, pass) => {
+        try {
+          const snap = await get(ref(db, 'accounts/' + user));
+          if (snap.exists()) return { success: false, error: "Это имя уже занято" };
+          
+          const newData = { 
+            password: pass, 
+            score: 0, 
+            ownedSkins: ['user-image-1-cat-png'], 
+            selectedSkin: 'user-image-1-cat-png',
+            lastSeen: serverTimestamp()
+          };
+          
+          await set(ref(db, 'accounts/' + user), newData);
+          localStorage.setItem('kotost_user', user);
+          return { success: true, data: newData };
+        } catch(e) { 
+          console.error(e);
+          return { success: false, error: "Ошибка сети" }; 
+        }
+      };
+
+      // Функция сохранения прогресса в облако
+      window.saveCloudProgress = async function(score, skins, selectedSkin) {
+        const user = localStorage.getItem('kotost_user');
+        if (!user) return; // Если гость - не сохраняем
+        
+        try {
+          const userRef = ref(db, 'accounts/' + user);
+          await update(userRef, {
+            score: Math.floor(score),
+            ownedSkins: skins,
+            selectedSkin: selectedSkin,
+            lastSeen: serverTimestamp()
+          });
+        } catch (e) {
+          console.log("Ошибка сохранения в облако:", e);
+        }
+      };
+
+      // Функция для получения всех аккаунтов (для Дев-панели)
+      window.getAllAccounts = function(callback) {
+        onValue(ref(db, 'accounts'), (snapshot) => {
+          callback(snapshot.val());
         });
       };
+          
     </script>
 </head>
   <body data-phase="game" style="-webkit-tap-highlight-color: transparent; user-select: none; height: 100%; overscroll-behavior: contain;" class="">
@@ -838,6 +904,82 @@ window.sekaiEditable = {
         document.getElementById('custom-dialog-cancel').onclick = () => finish(false);
       }
 
+            // Функция для показа окна авторизации
+      function showAuthModal(actionType) {
+        // Если окно уже есть, удаляем старое
+        let existing = document.getElementById('auth-modal-dynamic');
+        if (existing) existing.remove();
+
+        // Создаем окно
+        const modal = document.createElement('div');
+        modal.id = 'auth-modal-dynamic';
+        modal.className = 'custom-dialog open';
+        modal.style.zIndex = '10000';
+        
+        modal.innerHTML = `
+          <div class="custom-dialog-box" style="max-width: 400px; text-align: center;">
+            <h2 style="color: var(--sekai-blood-red); margin-bottom: 10px;">THE CREATOR WATCHES</h2>
+            <p style="color: var(--sekai-bone-dim); margin-bottom: 20px; font-size: 16px;">Войдите в симуляцию, чтобы сохранить свой прогресс.</p>
+            
+            <input type="text" id="dyn-auth-user" class="dev-input" placeholder="Имя Собирателя (Ник)" autocomplete="off" style="margin-bottom: 10px;">
+            <input type="password" id="dyn-auth-pass" class="dev-input" placeholder="Секретный код (Пароль)" autocomplete="off" style="margin-bottom: 20px;">
+            
+            <div style="display: flex; gap: 10px;">
+              <button id="dyn-btn-login" class="dialog-btn" style="flex: 1; font-size: 18px;">[ ВОЙТИ ]</button>
+              <button id="dyn-btn-register" class="dialog-btn" style="flex: 1; font-size: 18px;">[ СОЗДАТЬ ]</button>
+            </div>
+            <button id="dyn-btn-skip" class="dialog-btn" style="width: 100%; margin-top: 10px; border-color: transparent; color: #666; font-size: 14px;">Играть как гость</button>
+            
+            <div id="dyn-auth-error" style="color: var(--sekai-blood-red); margin-top: 15px; min-height: 20px; font-family: monospace;"></div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+
+        // Обработчики кнопок
+        const handleAuth = async (isRegister) => {
+          const user = document.getElementById('dyn-auth-user').value.trim();
+          const pass = document.getElementById('dyn-auth-pass').value.trim();
+          const errEl = document.getElementById('dyn-auth-error');
+          
+          if (user.length < 3 || pass.length < 3) {
+            errEl.textContent = "Ник и код должны быть от 3 символов";
+            return;
+          }
+
+          const res = isRegister ? await window.doRegister(user, pass) : await window.doLogin(user, pass);
+          
+          if (res.success) {
+            modal.remove();
+            // Загружаем прогресс
+            state.clickCount = res.data.score || 0;
+            state.ownedSkins = res.data.ownedSkins || ['user-image-1-cat-png'];
+            state.selectedSkin = res.data.selectedSkin || 'user-image-1-cat-png';
+            updateHud(); renderShop(); saveProgress();
+
+            if (actionType === 'newgame') {
+              showCustomConfirm('Стереть память и начать с нуля?', () => {
+                 state.clickCount = 0; state.ownedSkins = ['user-image-1-cat-png'];
+                 updateHud(); renderShop(); saveProgress();
+                 handleContinue();
+              });
+            } else {
+              handleContinue();
+            }
+          } else {
+            errEl.textContent = res.error;
+          }
+        };
+
+        document.getElementById('dyn-btn-login').onclick = () => handleAuth(false);
+        document.getElementById('dyn-btn-register').onclick = () => handleAuth(true);
+        document.getElementById('dyn-btn-skip').onclick = () => {
+           localStorage.removeItem('kotost_user');
+           modal.remove();
+           handleContinue(); // Играть как гость
+        };
+      }
+
           const skins = [
         { id:'user-image-1-cat-png', name:'Обычный', cost:0, price:'БЕСПЛАТНО', multiplier:1 },
         { id:'user-image-2-big_cat-png', name:'Толстый', cost:1e6, price:'1M', multiplier:2 },
@@ -1122,7 +1264,9 @@ window.sekaiEditable = {
         state.clickBonus = clickBonus;
       }
 
-      function saveProgress() {
+
+            function saveProgress() {
+        // 1. Сохраняем локально
         localStorage.setItem('kotost-clicker-ii-save', JSON.stringify({
           clickCount: state.clickCount, ownedSkins: state.ownedSkins, selectedSkin: state.selectedSkin,
           upgrades: state.upgrades, achievements: state.achievements, lastDailyBonusDate: state.lastDailyBonusDate,
@@ -1131,8 +1275,13 @@ window.sekaiEditable = {
           creatorSeen: state.creatorSeen, creatorDismissed: creatorDismissed,
           creatorMessageCount: creatorMessageCount, isPostReset: isPostReset
         }));
-      }
 
+        // 2. СОХРАНЯЕМ В ОБЛАКО FIREBASE (ВОТ ЭТОТ КУСОК НУЖНО ДОБАВИТЬ!)
+        if (window.saveCloudProgress) {
+          window.saveCloudProgress(state.clickCount, state.ownedSkins, state.selectedSkin);
+        }
+      }
+      
       function loadProgress() {
         try {
           const saved = JSON.parse(localStorage.getItem('kotost-clicker-ii-save') || 'null');
@@ -1238,6 +1387,63 @@ window.sekaiEditable = {
       function renderDevPanel(containerId) {
         const box = document.getElementById(containerId); if (!box) return;
         box.innerHTML = '';
+
+                // --- СЕКЦИЯ БАЗЫ ИГРОКОВ (АККАУНТЫ) ---
+        const accountsSec = document.createElement('div');
+        accountsSec.innerHTML = `
+          <div class="dev-section-title">БАЗА ДАННЫХ СОБИРАТЕЛЕЙ</div>
+          <div id="${containerId}-accounts-list" style="font-size:14px; max-height:200px; overflow-y:auto; background:#000; border:1px solid #333; padding:8px; margin-bottom:10px;">
+            Загрузка...
+          </div>
+          <button id="${containerId}-btn-refresh-accounts" class="dev-btn">[ ОБНОВИТЬ БАЗУ ]</button>
+        `;
+        box.appendChild(accountsSec);
+
+        // Логика загрузки аккаунтов
+        const loadAccounts = () => {
+          const listEl = document.getElementById(`${containerId}-accounts-list`);
+          if (!listEl) return;
+          
+          if (window.getAllAccounts) {
+            window.getAllAccounts((accounts) => {
+              listEl.innerHTML = '';
+              if (!accounts) {
+                listEl.innerHTML = 'Аккаунтов пока нет.';
+                return;
+              }
+              
+              for (const [username, data] of Object.entries(accounts)) {
+                const div = document.createElement('div');
+                div.style.marginBottom = '6px';
+                div.style.borderBottom = '1px solid #222';
+                div.style.paddingBottom = '4px';
+                
+                // Форматируем время последнего захода
+                let lastSeenStr = 'Неизвестно';
+                if (data.lastSeen) {
+                  const date = new Date(data.lastSeen);
+                  lastSeenStr = date.toLocaleTimeString();
+                }
+
+                div.innerHTML = `
+                  <b style="color:var(--sekai-bone-bright);">${username}</b> | Котостей: <span style="color:#0f0;">${Math.floor(data.score || 0).toLocaleString()}</span><br>
+                  <span style="color:#666; font-size:12px;">Скин: ${data.selectedSkin || 'default'} | Скинов: ${(data.ownedSkins || []).length} | Был: ${lastSeenStr}</span>
+                `;
+                listEl.appendChild(div);
+              }
+            });
+          } else {
+            listEl.innerHTML = 'Ошибка: Firebase не загружен.';
+          }
+        };
+
+        // Запускаем загрузку при открытии панели
+        loadAccounts();
+        
+        // Кнопка обновления
+        box.querySelector(`#${containerId}-btn-refresh-accounts`)?.addEventListener('click', loadAccounts);
+        // --- КОНЕЦ СЕКЦИИ ---
+        
                 // --- НОВАЯ СЕКЦИЯ: КТО СЕЙЧАС ОНЛАЙН ---
         const onlineSec = document.createElement('div');
         onlineSec.innerHTML = `
