@@ -372,7 +372,37 @@ window.sekaiEditable = {
       @keyframes egg-flicker { 0%, 100% { opacity: 0.18; } 15% { opacity: 0.35; } 18% { opacity: 0.1; } 35% { opacity: 0.28; } 50% { opacity: 0.08; } 52% { opacity: 0.45; } 54% { opacity: 0.12; } 80% { opacity: 0.3; } 83% { opacity: 0.05; } }
       @keyframes intense-flash { 0% { background-color: #E50914; } 50% { background-color: #990008; } 100% { background-color: #FF1A26; } }
     </style>
-  </head>
+   <!-- Firebase WebSockets -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+      import { getDatabase, ref, set, onValue, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyA8Pztoq4tCZCBhyPbjjOb94ie2q4cq5aw",
+        authDomain: "kotost-clicker-ii.firebaseapp.com",
+        databaseURL: "https://kotost-clicker-ii-default-rtdb.firebaseio.com", 
+        projectId: "kotost-clicker-ii",
+        storageBucket: "kotost-clicker-ii.firebasestorage.app",
+        messagingSenderId: "855679660314",
+        appId: "1:855679660314:web:5fc06af95e765631c83ca3"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      let myId = 'Collector_' + Math.floor(Math.random() * 9999);
+      const onlineRef = ref(db, 'online_players/' + myId);
+
+      set(onlineRef, { status: 'В симуляции', time: serverTimestamp() });
+      onDisconnect(onlineRef).remove();
+
+      window.getOnlinePlayers = function(callback) {
+        onValue(ref(db, 'online_players'), (snapshot) => {
+          callback(snapshot.val());
+        });
+      };
+    </script>
+</head>
   <body data-phase="game" style="-webkit-tap-highlight-color: transparent; user-select: none; height: 100%; overscroll-behavior: contain;" class="">
     <div id="game">
       <canvas id="noise-canvas" width="512" height="275"></canvas>
@@ -1220,35 +1250,46 @@ window.sekaiEditable = {
         box.appendChild(onlineSec);
 
         // Логика генерации игроков
+        // Логика получения РЕАЛЬНЫХ игроков из Firebase
         const generateOnlineList = () => {
           const listEl = document.getElementById(`${containerId}-online-list`);
           if (!listEl) return;
           
-          listEl.innerHTML = '';
+          listEl.innerHTML = 'Подключение к симуляции...';
           
-          // Случайное количество игроков от 2 до 5
-          const playerCount = Math.floor(Math.random() * 4) + 2; 
-          
-          const fakeNames = ['User_8472', 'Collector_99', 'KotostLover', 'VHS_Enjoyer', 'Simulation_Breaker', 'TheWatcher'];
-          const fakeStatuses = ['[Кликает]', '[Покупает скин]', '[Читает почту]', '[Застрял на x500]', '[Плачет]'];
-          
-          // Генерируем игроков
-          for(let i=0; i<playerCount; i++) {
-            const name = fakeNames[Math.floor(Math.random() * fakeNames.length)] + '_' + Math.floor(Math.random() * 99);
-            const status = fakeStatuses[Math.floor(Math.random() * fakeStatuses.length)];
-            const div = document.createElement('div');
-            div.style.marginBottom = '4px';
-            div.innerHTML = `🟢 ${name} — <span style="color:#8E8A7D;">${status}</span>`;
-            listEl.appendChild(div);
-          }
+          if (window.getOnlinePlayers) {
+            window.getOnlinePlayers((players) => {
+              listEl.innerHTML = ''; // Очищаем список
+              
+              if (!players) {
+                listEl.innerHTML = 'В симуляции никого нет. Ты один.';
+              } else {
+                let count = 0;
+                for (const [id, data] of Object.entries(players)) {
+                  count++;
+                  const div = document.createElement('div');
+                  div.style.marginBottom = '4px';
+                  div.innerHTML = `🟢 <b>${id}</b> — <span style="color:#8E8A7D;">[${data.status || 'В сети'}]</span>`;
+                  listEl.appendChild(div);
+                }
+              }
 
-          // Иногда добавляем самого The Creator
-          if (Math.random() > 0.5) {
-            const creatorDiv = document.createElement('div');
-            creatorDiv.style.marginTop = '6px';
-            creatorDiv.style.color = 'var(--sekai-blood-red)';
-            creatorDiv.innerHTML = `👁️ <b>THE CREATOR</b> — <i>[Наблюдает за тобой]</i>`;
-            listEl.appendChild(creatorDiv);
+              // Всегда добавляем The Creator для атмосферы
+              const creatorDiv = document.createElement('div');
+              creatorDiv.style.marginTop = '6px';
+              creatorDiv.style.color = 'var(--sekai-blood-red)';
+              creatorDiv.innerHTML = `👁️ <b>THE CREATOR</b> — <i>[Наблюдает за тобой]</i>`;
+              listEl.appendChild(creatorDiv);
+              
+              // Счетчик реальных игроков
+              const countDiv = document.createElement('div');
+              countDiv.style.marginTop = '8px';
+              countDiv.style.color = '#555';
+              countDiv.textContent = `Реальных сознаний: ${players ? Object.keys(players).length : 0}`;
+              listEl.appendChild(countDiv);
+            });
+          } else {
+             listEl.innerHTML = 'Ошибка: Firebase не загружен.';
           }
         };
 
