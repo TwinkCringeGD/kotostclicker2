@@ -1615,7 +1615,11 @@ window.sekaiEditable = {
           btn.addEventListener('mouseenter', onButtonHover);
           btn.addEventListener('touchstart', onButtonHover, { passive: true });
         });
-        document.getElementById('btn-continue')?.addEventListener('click', handleContinue);
+        document.getElementById('btn-continue').onclick = () => {
+          armAudioOnFirstGesture(); playTapeJamGlitch(); vibrate(60);
+          const savedUser = localStorage.getItem('kotost_user');
+          if (savedUser) { handleContinue(); } else { showAuthModal('continue'); }
+        };
         document.getElementById('upgrade-subtab')?.addEventListener('click', () => {
           document.getElementById('upgrade-subtab').classList.add('active');
           document.getElementById('variant-subtab').classList.remove('active');
@@ -1629,7 +1633,13 @@ window.sekaiEditable = {
           document.getElementById('variant-list').classList.add('active');
           renderVariants();
         });
-        document.getElementById('btn-newgame')?.addEventListener('click', handleNewGame);
+        document.getElementById('btn-newgame').onclick = () => {
+          armAudioOnFirstGesture(); playTapeJamGlitch(); vibrate(80);
+          const savedUser = localStorage.getItem('kotost_user');
+          if (savedUser) {
+            showCustomConfirm('Это сотрет ваш прогресс. Вы уверены?', () => { showAuthModal('newgame'); });
+          } else { showAuthModal('newgame'); }
+        };
         document.getElementById('btn-settings')?.addEventListener('click', handleOpenSettings);
         document.getElementById('btn-exit')?.addEventListener('click', handleExit);
         document.getElementById('easter-egg')?.addEventListener('click', triggerEasterEgg);
