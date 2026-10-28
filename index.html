@@ -907,11 +907,9 @@ window.sekaiEditable = {
 
             // Функция для показа окна авторизации
       function showAuthModal(actionType) {
-        // Если окно уже есть, удаляем старое
         let existing = document.getElementById('auth-modal-dynamic');
         if (existing) existing.remove();
 
-        // Создаем окно
         const modal = document.createElement('div');
         modal.id = 'auth-modal-dynamic';
         modal.className = 'custom-dialog open';
@@ -919,7 +917,7 @@ window.sekaiEditable = {
         
         modal.innerHTML = `
           <div class="custom-dialog-box" style="max-width: 400px; text-align: center;">
-            <h2 style="color: var(--sekai-blood-red); margin-bottom: 10px;">THE CREATOR WATCHES</h2>
+            <h2 style="color: var(--sekai-blood-red); margin-bottom: 10px;">ACCOUNT SETUP</h2>
             <p style="color: var(--sekai-bone-dim); margin-bottom: 20px; font-size: 16px;">Войдите в симуляцию, чтобы сохранить свой прогресс.</p>
             
             <input type="text" id="dyn-auth-user" class="dev-input" placeholder="Имя Собирателя (Ник)" autocomplete="off" style="margin-bottom: 10px;">
@@ -939,36 +937,51 @@ window.sekaiEditable = {
 
         // Обработчики кнопок
         const handleAuth = async (isRegister) => {
-          const user = document.getElementById('dyn-auth-user').value.trim();
-          const pass = document.getElementById('dyn-auth-pass').value.trim();
+          const userEl = document.getElementById('dyn-auth-user');
+          const passEl = document.getElementById('dyn-auth-pass');
           const errEl = document.getElementById('dyn-auth-error');
+          
+          if (!userEl || !passEl) return;
+          
+          const user = userEl.value.trim();
+          const pass = passEl.value.trim();
           
           if (user.length < 3 || pass.length < 3) {
             errEl.textContent = "Ник и код должны быть от 3 символов";
             return;
           }
 
-          const res = isRegister ? await window.doRegister(user, pass) : await window.doLogin(user, pass);
+          errEl.textContent = "Подключение к симуляции...";
           
-          if (res.success) {
-            modal.remove();
-            // Загружаем прогресс
-            state.clickCount = res.data.score || 0;
-            state.ownedSkins = res.data.ownedSkins || ['user-image-1-cat-png'];
-            state.selectedSkin = res.data.selectedSkin || 'user-image-1-cat-png';
-            updateHud(); renderShop(); saveProgress();
+          try {
+            const res = isRegister ? await window.doRegister(user, pass) : await window.doLogin(user, pass);
+            
+            if (res && res.success) {
+              modal.remove();
+              state.clickCount = res.data.score || 0;
+              state.ownedSkins = res.data.ownedSkins || ['user-image-1-cat-png'];
+              state.selectedSkin = res.data.selectedSkin || 'user-image-1-cat-png';
+              
+              const skin = skins.find(s => s.id === state.selectedSkin);
+              if (skin) state.multiplier = skin.multiplier;
+              
+              updateHud(); updateSelectedCat(); renderShop(); saveProgress();
 
-            if (actionType === 'newgame') {
-              showCustomConfirm('Стереть память и начать с нуля?', () => {
-                 state.clickCount = 0; state.ownedSkins = ['user-image-1-cat-png'];
-                 updateHud(); renderShop(); saveProgress();
-                 handleContinue();
-              });
+              if (actionType === 'newgame') {
+                showCustomConfirm('Стереть память и начать с нуля?', () => {
+                   state.clickCount = 0; state.ownedSkins = ['user-image-1-cat-png'];
+                   updateHud(); renderShop(); saveProgress();
+                   handleContinue();
+                });
+              } else {
+                handleContinue();
+              }
             } else {
-              handleContinue();
+              errEl.textContent = res ? res.error : "Ошибка данных";
             }
-          } else {
-            errEl.textContent = res.error;
+          } catch(e) {
+            errEl.textContent = "Ошибка сети. Проверьте консоль (F12).";
+            console.error(e);
           }
         };
 
@@ -977,7 +990,7 @@ window.sekaiEditable = {
         document.getElementById('dyn-btn-skip').onclick = () => {
            localStorage.removeItem('kotost_user');
            modal.remove();
-           handleContinue(); // Играть как гость
+           handleContinue();
         };
       }
 
