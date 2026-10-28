@@ -1396,8 +1396,177 @@ window.sekaiEditable = {
         setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 3000);
       }
 
-      const DEV_SECRET_PIN = 'HAVEFUN';
+      const DEV_SECRET_PIN = 'IFYOUFOUNDITIWILLBANYOU';
       let isDevModeUnlocked = false;
+
+            // Функция авторизации...
+        function showAuthModal(actionType) {
+        let existing = document.getElementById('auth-modal-dynamic');
+        if (existing) existing.remove();
+
+        const modal = document.createElement('div');
+        modal.id = 'auth-modal-dynamic';
+        modal.className = 'custom-dialog open';
+        modal.style.zIndex = '10000';
+        
+        modal.innerHTML = `
+          <div class="custom-dialog-box" style="max-width: 400px; text-align: center;">
+            <h2 style="color: var(--sekai-blood-red); margin-bottom: 10px;">ACCOUNT SETUP</h2>
+            <p style="color: var(--sekai-bone-dim); margin-bottom: 20px; font-size: 16px;">Войдите в симуляцию, чтобы сохранить свой прогресс.</p>
+            
+            <input type="text" id="dyn-auth-user" class="dev-input" placeholder="Имя Собирателя (Ник)" autocomplete="off" style="margin-bottom: 10px;">
+            <input type="password" id="dyn-auth-pass" class="dev-input" placeholder="Секретный код (Пароль)" autocomplete="off" style="margin-bottom: 20px;">
+            
+            <div style="display: flex; gap: 10px;">
+              <button id="dyn-btn-login" class="dialog-btn" style="flex: 1; font-size: 18px;">[ ВОЙТИ ]</button>
+              <button id="dyn-btn-register" class="dialog-btn" style="flex: 1; font-size: 18px;">[ СОЗДАТЬ ]</button>
+            </div>
+            <button id="dyn-btn-skip" class="dialog-btn" style="width: 100%; margin-top: 10px; border-color: transparent; color: #666; font-size: 14px;">Играть как гость</button>
+            
+            <div id="dyn-auth-error" style="color: var(--sekai-blood-red); margin-top: 15px; min-height: 20px; font-family: monospace;"></div>
+          </div>
+        `;
+        
+        document.body.appendChild(modal);
+
+        const handleAuth = async (isRegister) => {
+          const userEl = document.getElementById('dyn-auth-user');
+          const passEl = document.getElementById('dyn-auth-pass');
+          const errEl = document.getElementById('dyn-auth-error');
+          
+          if (!userEl || !passEl) return;
+          
+          const user = userEl.value.trim();
+          const pass = passEl.value.trim();
+          
+          if (user.length < 3 || pass.length < 3) {
+            errEl.textContent = "Ник и код должны быть от 3 символов";
+            return;
+          }
+
+          errEl.textContent = "Подключение к симуляции...";
+          
+          try {
+            const res = isRegister ? await window.doRegister(user, pass) : await window.doLogin(user, pass);
+            
+            if (res && res.success) {
+              modal.remove();
+              state.clickCount = res.data.score || 0;
+              state.ownedSkins = res.data.ownedSkins || ['user-image-1-cat-png'];
+              state.selectedSkin = res.data.selectedSkin || 'user-image-1-cat-png';
+              
+              const skin = skins.find(s => s.id === state.selectedSkin);
+              if (skin) state.multiplier = skin.multiplier;
+              
+              updateHud(); updateSelectedCat(); renderShop(); saveProgress();
+
+              if (actionType === 'newgame') {
+                showCustomConfirm('Стереть память и начать с нуля?', () => {
+                   state.clickCount = 0; state.ownedSkins = ['user-image-1-cat-png'];
+                   updateHud(); renderShop(); saveProgress();
+                   handleContinue();
+                });
+              } else {
+                handleContinue();
+              }
+            } else {
+              errEl.textContent = res ? res.error : "Ошибка данных";
+            }
+          } catch(e) {
+            errEl.textContent = "Ошибка сети. Проверьте консоль (F12).";
+            console.error(e);
+          }
+        };
+
+        document.getElementById('dyn-btn-login').onclick = () => handleAuth(false);
+        document.getElementById('dyn-btn-register').onclick = () => handleAuth(true);
+        document.getElementById('dyn-btn-skip').onclick = () => {
+           localStorage.removeItem('kotost_user');
+           modal.remove();
+           handleContinue();
+        };
+      }
+
+      // --- ФУНКЦИИ УПРАВЛЕНИЯ (ВСТАВИТЬ СЮДА) ---
+       window.openPlayerAdmin = async function(username) {
+        if (!window.getAllAccounts) return;
+        
+        window.getAllAccounts(async (accounts) => {
+          const data = accounts[username];
+          if (!data) return;
+
+          let existing = document.getElementById('admin-player-modal');
+          if (existing) existing.remove();
+
+          const modal = document.createElement('div');
+          modal.id = 'admin-player-modal';
+          modal.className = 'custom-dialog open';
+          modal.style.zIndex = '10001';
+          
+          const allSkins = ['user-image-1-cat-png', 'user-image-2-big_cat-png', 'user-image-3-cat_gray-png', 'user-image-4-silver-png', 'user-image-5-goldenkotost-png', 'user-image-6-lapiskotost-jpg', 'user-image-7-emeraldkotost-jpg', 'user-image-8-rubin-png', 'user-image-9-cosmickotost-jpg', 'user-image-10-samurai-png', 'user-image-11-magickotost-jpg'];
+          let skinsHtml = '';
+          allSkins.forEach(skin => {
+            const hasSkin = (data.ownedSkins || []).includes(skin);
+            skinsHtml += `
+              <label style="display:block; margin-bottom:5px; font-size:14px;">
+                <input type="checkbox" class="admin-skin-checkbox" value="${skin}" ${hasSkin ? 'checked' : ''}> ${skin}
+              </label>
+            `;
+          });
+
+          modal.innerHTML = `
+            <div class="custom-dialog-box" style="max-width: 500px; text-align: left;">
+              <h2 style="color: var(--sekai-blood-red); margin-bottom: 10px; text-align:center;">УПРАВЛЕНИЕ: ${username}</h2>
+              
+              <div style="margin-bottom: 15px;">
+                <div style="font-size: 16px; margin-bottom: 5px;">Изменить счет:</div>
+                <input type="number" id="admin-score-input" class="dev-input" value="${data.score || 0}">
+                <button class="dev-btn" onclick="window.saveAdminScore('${username}')">[ СОХРАНИТЬ СЧЕТ ]</button>
+              </div>
+
+              <div style="margin-bottom: 15px;">
+                <div style="font-size: 16px; margin-bottom: 5px;">Выдать/Забрать скины:</div>
+                <div style="max-height: 150px; overflow-y: auto; background:#000; padding:5px; border:1px solid #333;">
+                  ${skinsHtml}
+                </div>
+                <button class="dev-btn" onclick="window.saveAdminSkins('${username}')" style="margin-top:5px;">[ ПРИМЕНИТЬ СКИНЫ ]</button>
+              </div>
+
+              <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="dialog-btn" onclick="document.getElementById('admin-player-modal').remove()" style="flex:1;">[ ЗАКРЫТЬ ]</button>
+                <button class="dialog-btn danger-btn" onclick="window.deleteAdminAccount('${username}')" style="flex:1;">[ УДАЛИТЬ АККАУНТ ]</button>
+              </div>
+            </div>
+          `;
+          
+          document.body.appendChild(modal);
+        });
+      };
+
+      window.saveAdminScore = async function(username) {
+        const val = Number(document.getElementById('admin-score-input').value);
+        if (!isNaN(val)) {
+          await update(ref(db, 'accounts/' + username), { score: val });
+          alert('Счет сохранен!');
+        }
+      };
+
+      window.saveAdminSkins = async function(username) {
+        const checkboxes = document.querySelectorAll('.admin-skin-checkbox:checked');
+        const ownedSkins = Array.from(checkboxes).map(cb => cb.value);
+        if (!ownedSkins.includes('user-image-1-cat-png')) ownedSkins.push('user-image-1-cat-png');
+        
+        await update(ref(db, 'accounts/' + username), { ownedSkins: ownedSkins });
+        alert('Скины обновлены!');
+      };
+
+      window.deleteAdminAccount = async function(username) {
+        if (confirm(`Вы уверены, что хотите СТЕРЕТЬ аккаунт ${username} из симуляции?`)) {
+          await remove(ref(db, 'accounts/' + username));
+          document.getElementById('admin-player-modal').remove();
+          alert('Аккаунт стерт из реальности.');
+        }
+      };
 
       function renderDevPanel(containerId) {
         const box = document.getElementById(containerId); if (!box) return;
@@ -1415,7 +1584,7 @@ window.sekaiEditable = {
         box.appendChild(accountsSec);
 
         // Логика загрузки аккаунтов
-        const loadAccounts = () => {
+               const loadAccounts = () => {
           const listEl = document.getElementById(`${containerId}-accounts-list`);
           if (!listEl) return;
           
@@ -1429,20 +1598,23 @@ window.sekaiEditable = {
               
               for (const [username, data] of Object.entries(accounts)) {
                 const div = document.createElement('div');
-                div.style.marginBottom = '6px';
-                div.style.borderBottom = '1px solid #222';
-                div.style.paddingBottom = '4px';
+                div.style.cssText = 'margin-bottom:8px; padding:8px; border:1px solid #333; background:#0a0a0a;';
                 
-                // Форматируем время последнего захода
                 let lastSeenStr = 'Неизвестно';
                 if (data.lastSeen) {
                   const date = new Date(data.lastSeen);
                   lastSeenStr = date.toLocaleTimeString();
                 }
 
+                // Отображаем краткую инфу и кнопку управления
                 div.innerHTML = `
-                  <b style="color:var(--sekai-bone-bright);">${username}</b> | Котостей: <span style="color:#0f0;">${Math.floor(data.score || 0).toLocaleString()}</span><br>
-                  <span style="color:#666; font-size:12px;">Скин: ${data.selectedSkin || 'default'} | Скинов: ${(data.ownedSkins || []).length} | Был: ${lastSeenStr}</span>
+                  <div style="font-size:16px; color:var(--sekai-bone-white); margin-bottom:4px;">
+                    <b>${username}</b> | Котостей: <span style="color:#0f0;">${Math.floor(data.score || 0).toLocaleString()}</span>
+                  </div>
+                  <div style="font-size:14px; color:#888; margin-bottom:6px;">
+                    Скин: ${data.selectedSkin || 'default'} | Скинов: ${(data.ownedSkins || []).length} | Был: ${lastSeenStr}
+                  </div>
+                  <button class="dev-btn" onclick="window.openPlayerAdmin('${username}')" style="padding:4px; font-size:14px; border-color:var(--sekai-blood-red); color:var(--sekai-blood-red);">[ УПРАВЛЯТЬ ИГРОКОМ ]</button>
                 `;
                 listEl.appendChild(div);
               }
@@ -1452,13 +1624,7 @@ window.sekaiEditable = {
           }
         };
 
-        // Запускаем загрузку при открытии панели
-        loadAccounts();
-        
-        // Кнопка обновления
-        box.querySelector(`#${containerId}-btn-refresh-accounts`)?.addEventListener('click', loadAccounts);
-        // --- КОНЕЦ СЕКЦИИ ---
-        
+
                 // --- НОВАЯ СЕКЦИЯ: КТО СЕЙЧАС ОНЛАЙН ---
         const onlineSec = document.createElement('div');
         onlineSec.innerHTML = `
