@@ -1578,7 +1578,7 @@ window.sekaiEditable = {
               const creatorDiv = document.createElement('div');
               creatorDiv.style.marginTop = '6px';
               creatorDiv.style.color = 'var(--sekai-blood-red)';
-              creatorDiv.innerHTML = `👁️ <b>THE CREATOR</b> — <i>[Наблюдает за тобой]</i>`;
+              creatorDiv.innerHTML = ` <b>THE CREATOR</b> — <i>[bro i will ban you]</i>`;
               listEl.appendChild(creatorDiv);
               
               // Счетчик реальных игроков
@@ -1592,6 +1592,8 @@ window.sekaiEditable = {
              listEl.innerHTML = 'Ошибка: Firebase не загружен.';
           }
         };
+                // Запускаем загрузку при открытии панели
+        loadAccounts();
 
         // Вызываем генерацию при открытии и при нажатии кнопки
         generateOnlineList();
