@@ -1399,14 +1399,17 @@ window.sekaiEditable = {
            handleContinue();
         };
       }
-
-      // --- ФУНКЦИИ УПРАВЛЕНИЯ (ВСТАВИТЬ СЮДА) ---
-       window.openPlayerAdmin = async function(username) {
-        if (!window.getAllAccounts) return;
-        
-        window.getAllAccounts(async (accounts) => {
-          const data = accounts[username];
-          if (!data) return;
+      window.openPlayerAdmin = async function(username) {
+        try {
+          const userRef = ref(db, 'accounts/' + username);
+          const snap = await get(userRef);
+          
+          if (!snap.exists()) {
+            alert('Игрок не найден');
+            return;
+          }
+          
+          const data = snap.val();
 
           let existing = document.getElementById('admin-player-modal');
           if (existing) existing.remove();
@@ -1428,7 +1431,7 @@ window.sekaiEditable = {
           });
 
           modal.innerHTML = `
-            <div class="custom-dialog-box" style="max-width: 500px; text-align: left;">
+            <div class="custom-dialog-box" style="max-width: 500px; text-align: left; max-height: 90vh; overflow-y: auto;">
               <h2 style="color: var(--sekai-blood-red); margin-bottom: 10px; text-align:center;">УПРАВЛЕНИЕ: ${username}</h2>
               
               <div style="margin-bottom: 15px;">
@@ -1453,37 +1456,37 @@ window.sekaiEditable = {
           `;
           
           document.body.appendChild(modal);
-        });
-      };
 
-      window.saveAdminScore = async function(username) {
-        const val = Number(document.getElementById('admin-score-input').value);
-        if (!isNaN(val)) {
-          await update(ref(db, 'accounts/' + username), { score: val });
-          alert('Счет сохранен!');
+        } catch (e) {
+          console.error(e);
+          alert("Ошибка загрузки данных игрока.");
         }
       };
 
-      window.saveAdminSkins = async function(username) {
-        const checkboxes = document.querySelectorAll('.admin-skin-checkbox:checked');
-        const ownedSkins = Array.from(checkboxes).map(cb => cb.value);
-        if (!ownedSkins.includes('user-image-1-cat-png')) ownedSkins.push('user-image-1-cat-png');
-        
-        await update(ref(db, 'accounts/' + username), { ownedSkins: ownedSkins });
-        alert('Скины обновлены!');
-      };
-
-      window.deleteAdminAccount = async function(username) {
-        if (confirm(`Вы уверены, что хотите СТЕРЕТЬ аккаунт ${username} из симуляции?`)) {
-          await remove(ref(db, 'accounts/' + username));
-          document.getElementById('admin-player-modal').remove();
-          alert('Аккаунт стерт из реальности.');
-        }
-      };
-
+      
       function renderDevPanel(containerId) {
         const box = document.getElementById(containerId); if (!box) return;
         box.innerHTML = '';
+
+                // --- СЕКЦИЯ ГЛОБАЛЬНЫХ СООБЩЕНИЙ ---
+        const globalMsgSec = document.createElement('div');
+        globalMsgSec.innerHTML = `
+          <div class="dev-section-title">ГЛОБАЛЬНОЕ СООБЩЕНИЕ (THE CREATOR)</div>
+          <input type="text" id="${containerId}-global-msg-input" class="dev-input" placeholder="Введите текст для всех игроков...">
+          <button id="${containerId}-btn-send-global" class="dev-btn" style="border-color:var(--sekai-blood-red); color:var(--sekai-blood-red);">[ ОТПРАВИТЬ ВСЕМ ]</button>
+        `;
+        box.appendChild(globalMsgSec);
+
+        // Обработчик кнопки
+        box.querySelector(`#${containerId}-btn-send-global`)?.addEventListener('click', () => {
+          const input = box.querySelector(`#${containerId}-global-msg-input`);
+          if (input?.value && window.sendGlobalMessage) {
+            window.sendGlobalMessage(input.value);
+            input.value = '';
+            showCustomAlert('Сообщение отправлено!');
+          }
+        });
+        // --- КОНЕЦ СЕКЦИИ ---
 
                 // --- СЕКЦИЯ БАЗЫ ИГРОКОВ (АККАУНТЫ) ---
         const accountsSec = document.createElement('div');
@@ -1819,7 +1822,30 @@ window.sekaiEditable = {
         document.getElementById('btn-menu-dev-login')?.addEventListener('click', () => {
           handleDevAuth('menu-dev-pin-input', 'menu-dev-auth-status', 'menu-dev-auth-block', 'menu-dev-content-block');
         });
-
+               // Слушаем глобальные сообщения
+        if (window.listenGlobalMessage) {
+          let lastMsgTime = 0;
+          window.listenGlobalMessage((data) => {
+            if (data && data.text && data.timestamp > lastMsgTime) {
+              lastMsgTime = data.timestamp;
+              
+              const msgBox = document.createElement('div');
+              msgBox.style.cssText = `
+                position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+                background: rgba(0,0,0,0.95); border: 2px solid var(--sekai-blood-red);
+                color: #FFAAAA; padding: 10px 20px; font-family: 'VT323', monospace;
+                font-size: 22px; z-index: 99999; text-align: center;
+                box-shadow: 0 0 20px rgba(229,9,20,0.8); pointer-events: none;
+                animation: pane-reveal 0.3s ease both;
+                width: max-content; max-width: 90vw;
+              `;
+              msgBox.innerHTML = `<span style="font-size:14px; color:#888; display:block; margin-bottom:2px;">[ THE CREATOR ]</span>${data.text}`;
+              
+              document.body.appendChild(msgBox);
+              setTimeout(() => msgBox.remove(), 7000);
+            }
+          });
+        }
         renderPhase();
         checkForUpdates();
         checkBetaDisclaimer();
@@ -1964,6 +1990,34 @@ window.sekaiEditable = {
       };
 
       function translateDynamicElements() { /* no-op, kept for compatibility */ }
+      </script>
+        <!-- ГЛОБАЛЬНЫЕ СООБЩЕНИЯ -->
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-app.js";
+      import { getDatabase, ref, set, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/13.1.0/firebase-database.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyA8Pztoq4tCZCBhyPbjjOb94ie2q4cq5aw",
+        authDomain: "kotost-clicker-ii.firebaseapp.com",
+        databaseURL: "https://kotost-clicker-ii-default-rtdb.firebaseio.com", 
+        projectId: "kotost-clicker-ii",
+        storageBucket: "kotost-clicker-ii.firebasestorage.app",
+        messagingSenderId: "855679660314",
+        appId: "1:855679660314:web:5fc06af95e765631c83ca3"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
+
+      window.sendGlobalMessage = function(text) {
+        set(ref(db, 'global_message'), { text: text, timestamp: serverTimestamp() });
+      };
+
+      window.listenGlobalMessage = function(callback) {
+        onValue(ref(db, 'global_message'), (snapshot) => {
+          callback(snapshot.val());
+        });
+      };
     </script>
   </body>
 </html>
